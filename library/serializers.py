@@ -1,12 +1,46 @@
 from rest_framework import serializers
 
-from .models import Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
+from .models import AudioCategory, AudioTrack, Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ("id", "name", "slug", "order")
+
+
+class AudioCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AudioCategory
+        fields = ("id", "name", "slug", "order")
+
+
+class AudioTrackSerializer(serializers.ModelSerializer):
+    category = AudioCategorySerializer(read_only=True)
+    audio_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AudioTrack
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "category",
+            "speaker",
+            "language",
+            "duration",
+            "audio_url",
+            "external_url",
+            "description",
+            "is_free",
+            "play_count",
+        )
+
+    def get_audio_url(self, obj):
+        request = self.context.get("request")
+        if obj.audio_file and request:
+            return request.build_absolute_uri(obj.audio_file.url)
+        return obj.external_url or None
 
 
 class BookListSerializer(serializers.ModelSerializer):

@@ -1,7 +1,9 @@
 from rest_framework import generics, permissions
 
-from .models import Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
+from .models import AudioCategory, AudioTrack, Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
 from .serializers import (
+    AudioCategorySerializer,
+    AudioTrackSerializer,
     BookDetailSerializer,
     BookListSerializer,
     BookPageSerializer,
@@ -16,6 +18,32 @@ from .serializers import (
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+
+class AudioCategoryListView(generics.ListAPIView):
+    queryset = AudioCategory.objects.all()
+    serializer_class = AudioCategorySerializer
+
+
+class AudioTrackListView(generics.ListAPIView):
+    serializer_class = AudioTrackSerializer
+
+    def get_queryset(self):
+        queryset = AudioTrack.objects.filter(is_published=True).select_related("category")
+        category = self.request.query_params.get("category")
+        free = self.request.query_params.get("free")
+        if category:
+            queryset = queryset.filter(category__slug=category)
+        if free in {"1", "true", "True"}:
+            queryset = queryset.filter(is_free=True)
+        return queryset
+
+
+class FreeAudioTrackListView(generics.ListAPIView):
+    serializer_class = AudioTrackSerializer
+
+    def get_queryset(self):
+        return AudioTrack.objects.filter(is_published=True, is_free=True).select_related("category")[:5]
 
 
 class BookListView(generics.ListAPIView):

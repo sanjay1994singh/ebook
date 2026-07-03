@@ -1302,7 +1302,8 @@
       gap: 7px;
     }
 
-    .audio-actions button {
+    .audio-actions button,
+    .audio-actions a {
       width: 25px;
       height: 25px;
       border-radius: 50%;
@@ -1314,6 +1315,12 @@
       font-size: 13px;
       font-weight: 900;
       cursor: pointer;
+      text-decoration: none;
+    }
+
+    .audio-actions a + a + button,
+    .audio-actions a + a + button + button {
+      display: none;
     }
 
     .quotes-page {

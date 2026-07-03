@@ -21,6 +21,62 @@ class Category(models.Model):
         return self.name
 
 
+class AudioCategory(models.Model):
+    name = models.CharField(max_length=160)
+    slug = models.SlugField(max_length=180, unique=True, blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("order", "name")
+        verbose_name_plural = "Audio categories"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class AudioTrack(models.Model):
+    category = models.ForeignKey(
+        AudioCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tracks",
+    )
+    title = models.CharField(max_length=240)
+    slug = models.SlugField(max_length=240, unique=True, blank=True)
+    speaker = models.CharField(max_length=180, blank=True)
+    language = models.CharField(max_length=80, default="हिन्दी")
+    duration = models.CharField(max_length=20, blank=True, help_text="Example: 00:15:39")
+    audio_file = models.FileField(upload_to="audio_tracks/", blank=True, null=True)
+    external_url = models.URLField(blank=True)
+    description = models.TextField(blank=True)
+    is_free = models.BooleanField(default=True)
+    is_published = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+    play_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("order", "title")
+        indexes = [
+            models.Index(fields=["is_published", "is_free", "order"], name="audio_free_order_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
 class Book(models.Model):
     title = models.CharField(max_length=220)
     slug = models.SlugField(max_length=240, unique=True, blank=True)

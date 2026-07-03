@@ -2,7 +2,7 @@ from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Book, BookPage, Category, Chapter
+from .models import AudioTrack, Book, BookPage, Category, Chapter
 
 
 def web_home(request):
@@ -104,6 +104,7 @@ def web_audio_list(request):
         {"title": "06 प्रभु मिलन", "speaker": "रस वाणी", "duration": "01:20:12"},
         {"title": "02 संत कृपा", "speaker": "सत्संग", "duration": "00:17:09"},
     ]
+    audio_items = AudioTrack.objects.filter(is_published=True).select_related("category")
     return render(request, "library/web/audio_list.html", {"audio_items": audio_items})
 
 

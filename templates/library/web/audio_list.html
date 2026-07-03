@@ -60,6 +60,13 @@
             <p class="audio-meta">{{ item.duration }}</p>
           </div>
           <div class="audio-actions">
+            {% if item.audio_file %}
+              <a href="{{ item.audio_file.url }}" download title="Download">⇩</a>
+              <a href="{{ item.audio_file.url }}" title="Play">▷</a>
+            {% elif item.external_url %}
+              <a href="{{ item.external_url }}" title="Download">⇩</a>
+              <a href="{{ item.external_url }}" title="Play">▷</a>
+            {% endif %}
             <button type="button" title="Download">⇩</button>
             <button type="button" title="Play">▶</button>
           </div>

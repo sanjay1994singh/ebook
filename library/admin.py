@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
+from .models import (
+    AudioCategory,
+    AudioTrack,
+    Book,
+    BookPage,
+    Category,
+    Chapter,
+    FavoriteBook,
+    ReadingProgress,
+)
 from .pdf_importer import extract_pdf_to_book
 
 
@@ -18,6 +27,20 @@ class BookPageInline(admin.TabularInline):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "order")
     prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(AudioCategory)
+class AudioCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "order")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(AudioTrack)
+class AudioTrackAdmin(admin.ModelAdmin):
+    list_display = ("title", "speaker", "category", "duration", "is_free", "is_published", "order")
+    list_filter = ("category", "language", "is_free", "is_published")
+    search_fields = ("title", "speaker", "description")
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Book)
