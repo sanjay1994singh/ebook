@@ -1,0 +1,143 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}reader-shell{% endblock %}
+{% block title %}{{ book.title }} : {{ page.title|default:page.chapter.title }}{% endblock %}
+
+{% block body %}
+<header class="reader-top">
+  <div class="reader-row">
+    <div class="reader-left-tools">
+      <a class="reader-menu-icon" href="{% url 'web_book_detail' book.slug %}">☰</a>
+      <div class="reader-title">{{ book.title }} : <span id="readerPageTitleInline">{{ page.title|default:page.chapter.title }}</span></div>
+    </div>
+    <div class="reader-right-tools">
+      <span class="reader-tool">♧</span>
+      <div class="reader-zoom"><span>−</span>100%<span>+</span></div>
+      <span class="reader-tool">↻</span>
+      <span class="reader-tool">◉</span>
+      <a class="reader-tool" href="{% url 'web_book_detail' book.slug %}">×</a>
+    </div>
+  </div>
+  <div class="reader-page-title" id="readerPageTitle">{{ page.title|default:page.chapter.title }}</div>
+</header>
+
+<article class="{% if page.page_image %}pdf-page-wrap{% else %}page-paper{% endif %}" id="readerPageArea">
+  {% if page.page_image %}
+    <img class="pdf-page-image" id="readerPageImage" src="{{ page.page_image.url }}" alt="{{ page.title|default:page.chapter.title }}">
+  {% else %}
+    <div id="readerTextContent">{{ page.content }}</div>
+  {% endif %}
+</article>
+
+<nav class="reader-footer">
+  <div class="footer-group">
+    <button type="button" id="previousPageButton" data-page-id="{% if previous_page %}{{ previous_page.id }}{% endif %}" aria-label="Previous page">‹</button>
+    <button type="button" id="nextPageButton" data-page-id="{% if next_page %}{{ next_page.id }}{% endif %}" aria-label="Next page">›</button>
+  </div>
+  <span class="page-count" id="readerPageCount">{{ current_index }}/{{ total_pages }}</span>
+  <a href="{% url 'web_book_detail' book.slug %}">↻</a>
+</nav>
+
+<button type="button" class="reader-side-button previous" id="previousSideButton" data-page-id="{% if previous_page %}{{ previous_page.id }}{% endif %}" aria-label="Previous page">‹</button>
+<button type="button" class="reader-side-button next" id="nextSideButton" data-page-id="{% if next_page %}{{ next_page.id }}{% endif %}" aria-label="Next page">›</button>
+
+<script>
+  (function () {
+    const pageArea = document.getElementById("readerPageArea");
+    const pageTitle = document.getElementById("readerPageTitle");
+    const pageTitleInline = document.getElementById("readerPageTitleInline");
+    const pageCount = document.getElementById("readerPageCount");
+    const previousButton = document.getElementById("previousPageButton");
+    const nextButton = document.getElementById("nextPageButton");
+    const previousSideButton = document.getElementById("previousSideButton");
+    const nextSideButton = document.getElementById("nextSideButton");
+    const pageCache = new Map();
+
+    function setButton(button, pageId) {
+      button.dataset.pageId = pageId || "";
+      button.disabled = !pageId;
+      button.style.opacity = pageId ? "1" : ".18";
+    }
+
+    function showPage(data, shouldPushUrl) {
+      pageTitle.textContent = data.title;
+      pageTitleInline.textContent = data.title;
+      pageCount.textContent = `${data.current_index}/${data.total_pages}`;
+      setButton(previousButton, data.previous_id);
+      setButton(nextButton, data.next_id);
+      setButton(previousSideButton, data.previous_id);
+      setButton(nextSideButton, data.next_id);
+
+      if (data.image_url) {
+        pageArea.className = "pdf-page-wrap";
+        pageArea.innerHTML = `<img class="pdf-page-image" id="readerPageImage" src="${data.image_url}" alt="${data.title}">`;
+      } else {
+        pageArea.className = "page-paper";
+        pageArea.textContent = data.content || "";
+      }
+
+      if (shouldPushUrl) {
+        window.history.pushState({ pageId: data.id }, data.title, data.reader_url);
+      }
+    }
+
+    async function loadPage(pageId, shouldPushUrl) {
+      if (!pageId) return;
+
+      if (pageCache.has(String(pageId))) {
+        showPage(pageCache.get(String(pageId)), shouldPushUrl);
+        return;
+      }
+
+      pageArea.classList.add("is-changing");
+      const response = await fetch(`/web/reader/${pageId}/data/`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      const data = await response.json();
+      pageCache.set(String(pageId), data);
+
+      const finish = function () {
+        showPage(data, shouldPushUrl);
+        requestAnimationFrame(function () {
+          pageArea.classList.remove("is-changing");
+        });
+      };
+
+      if (data.image_url) {
+        const preloadImage = new Image();
+        preloadImage.onload = finish;
+        preloadImage.onerror = finish;
+        preloadImage.src = data.image_url;
+      } else {
+        finish();
+      }
+    }
+
+    previousButton.addEventListener("click", function () {
+      loadPage(previousButton.dataset.pageId, true);
+    });
+
+    nextButton.addEventListener("click", function () {
+      loadPage(nextButton.dataset.pageId, true);
+    });
+
+    previousSideButton.addEventListener("click", function () {
+      loadPage(previousSideButton.dataset.pageId, true);
+    });
+
+    nextSideButton.addEventListener("click", function () {
+      loadPage(nextSideButton.dataset.pageId, true);
+    });
+
+    window.addEventListener("popstate", function () {
+      const match = window.location.pathname.match(/\/web\/reader\/(\d+)\//);
+      if (match) loadPage(match[1], false);
+    });
+
+    setButton(previousButton, previousButton.dataset.pageId);
+    setButton(nextButton, nextButton.dataset.pageId);
+    setButton(previousSideButton, previousSideButton.dataset.pageId);
+    setButton(nextSideButton, nextSideButton.dataset.pageId);
+  })();
+</script>
+{% endblock %}

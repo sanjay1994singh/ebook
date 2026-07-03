@@ -1,0 +1,52 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}site-shell{% endblock %}
+{% block title %}अमृत वचन{% endblock %}
+
+{% block body %}
+{% include "library/web/partials/site_header.html" %}
+<section class="site-hero">
+  <h1>अमृत वचन</h1>
+  <span>होम / अमृत वचन</span>
+</section>
+
+<main class="quotes-page">
+  <h2 class="quotes-heading">अमृत वचन</h2>
+  <section class="quotes-grid" aria-label="Amrit Vachan">
+    {% for quote in quotes %}
+      <article class="quote-card">
+        <p class="quote-text">{{ quote.text }}</p>
+        <div class="quote-source">{{ quote.source }}</div>
+      </article>
+    {% endfor %}
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <section>
+      <h3>महत्वपूर्ण पोर्टल</h3>
+      <p>अखिल भारतीय सेवाएं</p>
+      <p>श्री हरिदासीय परम्परा</p>
+      <p>श्री धाम वृन्दावन</p>
+    </section>
+    <section>
+      <h3>विषय</h3>
+      <p>ई - पुस्तकें</p>
+      <p>प्रवचन</p>
+      <p>दैनिक सत्संग</p>
+      <p>अमृत वचन</p>
+    </section>
+    <section>
+      <h3>हमारी वीडियो</h3>
+      <p>संकीर्तन लीला</p>
+      <p>उपदेश की बातें</p>
+      <p>नाम जप</p>
+    </section>
+    <section>
+      <h3>App</h3>
+      <div class="qr-box" aria-label="QR code"></div>
+    </section>
+  </div>
+</footer>
+{% endblock %}

@@ -1,0 +1,46 @@
+<header class="gita-header">
+  <div class="gita-top-line">॥ श्रीहरिः ॥</div>
+  <div class="gita-header-inner">
+    <a class="gita-logo" href="{% url 'web_home' %}">
+      <span class="gita-feather"></span>
+      <span class="gita-logo-main">gita</span>
+      <span class="gita-logo-sub">Seva Trust</span>
+    </a>
+
+    <div class="gita-search">
+      <select aria-label="Search category">
+        <option>सभी</option>
+        <option>ई-पुस्तकें</option>
+        <option>पत्रिकाएं</option>
+      </select>
+      <input type="search" aria-label="Search">
+      <button type="button">⌕</button>
+    </div>
+
+    <button class="gita-language" type="button">
+      <span class="india-flag"></span>
+      <strong>हिन्दी</strong>
+      <span>⌄</span>
+    </button>
+
+    <nav class="gita-menu" aria-label="Main menu">
+      <a href="{% url 'web_home' %}" class="home-icon">⌂</a>
+      <span>::</span>
+      <a href="{% url 'web_home' %}">परिचय</a>
+      <span>::</span>
+      <a href="{% url 'web_book_list' %}">ई - पुस्तकें</a>
+      <span>::</span>
+      <a href="{% url 'web_patrika_list' %}">पत्रिकाएं⌄</a>
+      <span>::</span>
+      <a href="{% url 'web_audio_list' %}">ऑडियो⌄</a>
+      <span>::</span>
+      <a href="{% url 'web_book_list' %}">वीडियो</a>
+      <span>::</span>
+      <a href="{% url 'web_divine_quotes' %}">अमृत वचन</a>
+      <span>::</span>
+      <a href="{% url 'web_book_list' %}">अनमोल लेख</a>
+    </nav>
+
+    <span class="gita-round-badge">SRBC</span>
+  </div>
+</header>

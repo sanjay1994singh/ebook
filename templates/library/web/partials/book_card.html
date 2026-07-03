@@ -1,0 +1,12 @@
+<a class="book-card" href="{% url 'web_book_detail' book.slug %}">
+  <div class="cover">
+    {% if book.cover_image %}
+      <img src="{{ book.cover_image.url }}" alt="{{ book.title }}">
+    {% else %}
+      <span>॥ श्रीहरिः ॥</span>
+      <span class="cover-title">{{ book.title }}</span>
+      <span>ॐ</span>
+    {% endif %}
+  </div>
+  <p class="book-title">{{ book.title }}</p>
+</a>

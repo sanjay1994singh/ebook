@@ -1,0 +1,103 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}site-shell{% endblock %}
+{% block title %}ऑडियो{% endblock %}
+
+{% block body %}
+{% include "library/web/partials/site_header.html" %}
+<section class="site-hero">
+  <h1>ऑडियो</h1>
+  <span>होम / ऑडियो</span>
+</section>
+
+<main class="audio-page">
+  <aside class="filter-panel">
+    <h2 class="filter-title">फिल्टर करें</h2>
+    <div class="filter-group">
+      <div class="filter-heading">ऑडियो श्रेणी <span>⌃</span></div>
+      <ul class="filter-list">
+        <li>सभी</li>
+        <li>गीत गोविंद</li>
+        <li>प्रवचन</li>
+        <li>अमृत वचन</li>
+        <li>भजन संग्रह</li>
+        <li>सत्संग</li>
+        <li>नाम जप</li>
+        <li>श्री हरिदासजी वाणी</li>
+        <li>कृपा प्रसंग</li>
+        <li>रसिक संत वचन</li>
+        <li>वृन्दावन धाम</li>
+      </ul>
+    </div>
+    <div class="filter-group">
+      <div class="filter-heading">लेखक <span>⌄</span></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-heading">भाषा <span>⌄</span></div>
+    </div>
+  </aside>
+
+  <section class="audio-panel">
+    <div class="audio-toolbar">
+      <strong>कुल रिकॉर्ड : {{ audio_items|length }}</strong>
+      <label class="sort-control">
+        क्रमबद्ध करें
+        <select>
+          <option>लोकप्रिय</option>
+          <option>नवीनतम</option>
+          <option>नाम</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="audio-list">
+      {% for item in audio_items %}
+        <article class="audio-item">
+          <div class="audio-icon">♫</div>
+          <div>
+            <h2 class="audio-title">{{ item.title }}</h2>
+            <p class="audio-meta">{{ item.speaker }}</p>
+            <p class="audio-meta">{{ item.duration }}</p>
+          </div>
+          <div class="audio-actions">
+            <button type="button" title="Download">⇩</button>
+            <button type="button" title="Play">▶</button>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="pagination-row" aria-label="Pagination">
+      <span>«</span><span class="active">1</span><span>2</span><span>3</span><span>4</span><span>...</span><span>»</span>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <section>
+      <h3>महत्वपूर्ण पोर्टल</h3>
+      <p>अखिल भारतीय सेवाएं</p>
+      <p>श्री हरिदासीय परम्परा</p>
+      <p>श्री धाम वृन्दावन</p>
+    </section>
+    <section>
+      <h3>विषय</h3>
+      <p>ई - पुस्तकें</p>
+      <p>प्रवचन</p>
+      <p>दैनिक सत्संग</p>
+      <p>अमृत वचन</p>
+    </section>
+    <section>
+      <h3>हमारी वीडियो</h3>
+      <p>संकीर्तन लीला</p>
+      <p>उपदेश की बातें</p>
+      <p>नाम जप</p>
+    </section>
+    <section>
+      <h3>App</h3>
+      <div class="qr-box" aria-label="QR code"></div>
+    </section>
+  </div>
+</footer>
+{% endblock %}

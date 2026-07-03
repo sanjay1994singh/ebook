@@ -1,0 +1,29 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}site-shell{% endblock %}
+{% block title %}पत्रिकाएँ{% endblock %}
+
+{% block body %}
+{% include "library/web/partials/site_header.html" %}
+<section class="site-hero">
+  <h1>पत्रिकाएँ</h1>
+  <span>होम / पत्रिकाएँ</span>
+</section>
+
+<main class="patrika-page">
+  <section class="patrika-grid" aria-label="Patrika list">
+    {% for magazine in magazines %}
+      <article class="patrika-card">
+        <div class="patrika-cover">{{ magazine.cover }}</div>
+        <div class="patrika-info">
+          <h2>{{ magazine.title }}</h2>
+          <p>{{ magazine.subtitle }}</p>
+          <p>भाषा: {{ magazine.language }} <strong>Issues: {{ magazine.issues }}</strong></p>
+          <p>Latest issue: {{ magazine.latest }}</p>
+          <a class="patrika-button" href="#">सभी अंक देखें →</a>
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

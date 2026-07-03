@@ -1,0 +1,97 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}site-shell{% endblock %}
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block body %}
+{% include "library/web/partials/site_header.html" %}
+<section class="site-hero">
+  <h1>ई - पुस्तकें</h1>
+  <span>होम / ई - पुस्तकें / {{ book.title }}</span>
+</section>
+
+<main class="book-detail-page">
+  <section class="book-detail-card">
+    <div class="book-summary">
+      <div class="book-detail-cover">
+        {% if book.cover_image %}
+          <img src="{{ book.cover_image.url }}" alt="{{ book.title }}">
+        {% else %}
+          <span>{{ book.title }}</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <div class="book-detail-title-row">
+          <h1 class="book-detail-title">{{ book.title }}</h1>
+          <span class="heart-button">♡</span>
+        </div>
+
+        <div class="book-meta-row">
+          <strong>भाषा</strong>
+          <span>{{ book.language }}</span>
+        </div>
+
+        {% if book.author %}
+          <div class="book-meta-row">
+            <strong>लेखक</strong>
+            <span>{{ book.author }}</span>
+          </div>
+        {% endif %}
+
+        <div class="book-progress"><span></span></div>
+
+        <div class="detail-actions">
+          {% if first_page %}
+            <a href="{% url 'web_reader_page' first_page.id %}">प्रारंभ से पढ़ें</a>
+            <a href="{% url 'web_reader_page' first_page.id %}">पढ़ना जारी रखें</a>
+          {% else %}
+            <span class="disabled">Page नहीं मिला</span>
+            <span class="disabled">PDF extract करें</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <h2 class="toc-title">विषय सूची</h2>
+    <div class="toc-list">
+      {% for chapter in chapters %}
+        <a class="toc-link" href="{% url 'web_chapter_start' chapter.id %}">
+          <span class="bullet">{% if forloop.counter > 6 %}+{% else %}•{% endif %}</span>
+          <span>{{ chapter.title }}</span>
+        </a>
+      {% empty %}
+        <div class="empty">इस book में अभी chapters/pages नहीं हैं। Admin में PDF upload करके save करें।</div>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <section>
+      <h3>महत्वपूर्ण पोर्टल</h3>
+      <p>अखिल भारतीय सेवाएं</p>
+      <p>श्री हरिदासीय परम्परा</p>
+      <p>श्री धाम वृन्दावन</p>
+    </section>
+    <section>
+      <h3>विषय</h3>
+      <p>ई - पुस्तकें</p>
+      <p>प्रवचन</p>
+      <p>दैनिक सत्संग</p>
+      <p>अमृत वचन</p>
+    </section>
+    <section>
+      <h3>हमारी वीडियो</h3>
+      <p>संकीर्तन लीला</p>
+      <p>उपदेश की बातें</p>
+      <p>नाम जप</p>
+    </section>
+    <section>
+      <h3>App</h3>
+      <div class="qr-box" aria-label="QR code"></div>
+    </section>
+  </div>
+</footer>
+{% endblock %}

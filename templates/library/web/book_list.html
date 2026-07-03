@@ -1,0 +1,98 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}site-shell{% endblock %}
+{% block title %}ई-पुस्तकें{% endblock %}
+
+{% block body %}
+{% include "library/web/partials/site_header.html" %}
+<section class="site-hero">
+  <h1>ई - पुस्तकें</h1>
+  <span>होम / ई - पुस्तकें</span>
+</section>
+
+<section class="catalog-page">
+  <aside class="filter-panel">
+    <h2 class="filter-title">फिल्टर करें</h2>
+    <div class="filter-group">
+      <div class="filter-heading">ई पुस्तक श्रेणी <span>⌃</span></div>
+      <ul class="filter-list">
+        {% for category in categories %}
+          <li>{{ category.name }}</li>
+        {% empty %}
+          <li>अभी कोई श्रेणी नहीं है</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="filter-group">
+      <div class="filter-heading">लेखक <span>⌄</span></div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-heading">भाषा <span>⌄</span></div>
+    </div>
+  </aside>
+
+  <main class="catalog-panel">
+    <div class="catalog-toolbar">
+      <strong>कुल किताबें : {{ books|length }}</strong>
+      <label class="sort-control">
+        क्रमबद्ध करें
+        <select>
+          <option>लोकप्रिय</option>
+          <option>नवीनतम</option>
+          <option>नाम</option>
+        </select>
+      </label>
+    </div>
+
+    {% if books %}
+      <div class="site-book-grid">
+        {% for book in books %}
+          <a class="site-book" href="{% url 'web_book_detail' book.slug %}">
+            <div class="site-book-cover">
+              {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }}">
+              {% else %}
+                <span>{{ book.title }}</span>
+              {% endif %}
+            </div>
+            <p class="site-book-title">{{ book.title }}</p>
+          </a>
+        {% endfor %}
+      </div>
+      <div class="pagination-row" aria-label="Pagination">
+        <span>«</span><span class="active">1</span><span>2</span><span>3</span><span>4</span><span>...</span><span>»</span>
+      </div>
+    {% else %}
+      <div class="empty">अभी कोई uploaded book नहीं है। Admin panel से PDF upload करें।</div>
+    {% endif %}
+  </main>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <section>
+      <h3>महत्वपूर्ण पोर्टल</h3>
+      <p>अखिल भारतीय सेवाएं</p>
+      <p>श्री हरिदासीय परम्परा</p>
+      <p>श्री धाम वृन्दावन</p>
+    </section>
+    <section>
+      <h3>विषय</h3>
+      <p>ई - पुस्तकें</p>
+      <p>प्रवचन</p>
+      <p>दैनिक सत्संग</p>
+      <p>अमृत वचन</p>
+    </section>
+    <section>
+      <h3>हमारी वीडियो</h3>
+      <p>संकीर्तन लीला</p>
+      <p>उपदेश की बातें</p>
+      <p>नाम जप</p>
+    </section>
+    <section>
+      <h3>App</h3>
+      <div class="qr-box" aria-label="QR code"></div>
+    </section>
+  </div>
+</footer>
+{% endblock %}
