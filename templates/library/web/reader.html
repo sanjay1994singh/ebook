@@ -21,9 +21,14 @@
   <div class="reader-page-title" id="readerPageTitle">{{ page.title|default:page.chapter.title }}</div>
 </header>
 
-<article class="{% if page.page_image %}pdf-page-wrap{% else %}page-paper{% endif %}" id="readerPageArea">
+<article
+  class="{% if page.page_image %}pdf-page-wrap{% else %}page-paper{% endif %}"
+  id="readerPageArea"
+  data-next-image-url="{{ reader_payload.next_image_url }}"
+  data-previous-image-url="{{ reader_payload.previous_image_url }}"
+>
   {% if page.page_image %}
-    <img class="pdf-page-image" id="readerPageImage" src="{{ page.page_image.url }}" alt="{{ page.title|default:page.chapter.title }}">
+    <img class="pdf-page-image" id="readerPageImage" src="{{ page.page_image.url }}" alt="{{ page.title|default:page.chapter.title }}" loading="eager" decoding="async" fetchpriority="high">
   {% else %}
     <div id="readerTextContent">{{ page.content }}</div>
   {% endif %}
@@ -53,6 +58,13 @@
     const nextSideButton = document.getElementById("nextSideButton");
     const pageCache = new Map();
 
+    function warmImage(url) {
+      if (!url) return;
+      const image = new Image();
+      image.decoding = "async";
+      image.src = url;
+    }
+
     function setButton(button, pageId) {
       button.dataset.pageId = pageId || "";
       button.disabled = !pageId;
@@ -70,11 +82,16 @@
 
       if (data.image_url) {
         pageArea.className = "pdf-page-wrap";
-        pageArea.innerHTML = `<img class="pdf-page-image" id="readerPageImage" src="${data.image_url}" alt="${data.title}">`;
+        pageArea.innerHTML = `<img class="pdf-page-image" id="readerPageImage" src="${data.image_url}" alt="${data.title}" loading="eager" decoding="async" fetchpriority="high">`;
       } else {
         pageArea.className = "page-paper";
         pageArea.textContent = data.content || "";
       }
+
+      pageArea.dataset.nextImageUrl = data.next_image_url || "";
+      pageArea.dataset.previousImageUrl = data.previous_image_url || "";
+      warmImage(data.next_image_url);
+      warmImage(data.previous_image_url);
 
       if (shouldPushUrl) {
         window.history.pushState({ pageId: data.id }, data.title, data.reader_url);
@@ -138,6 +155,8 @@
     setButton(nextButton, nextButton.dataset.pageId);
     setButton(previousSideButton, previousSideButton.dataset.pageId);
     setButton(nextSideButton, nextSideButton.dataset.pageId);
+    warmImage(pageArea.dataset.nextImageUrl);
+    warmImage(pageArea.dataset.previousImageUrl);
   })();
 </script>
 {% endblock %}

@@ -57,6 +57,9 @@ class Chapter(models.Model):
 
     class Meta:
         ordering = ("order", "id")
+        indexes = [
+            models.Index(fields=["book", "order", "id"], name="chap_book_order_idx"),
+        ]
 
     def __str__(self):
         return f"{self.book.title} - {self.title}"
@@ -72,6 +75,9 @@ class BookPage(models.Model):
     class Meta:
         ordering = ("page_number", "id")
         unique_together = ("chapter", "page_number")
+        indexes = [
+            models.Index(fields=["chapter", "page_number", "id"], name="page_chapter_num_idx"),
+        ]
 
     def __str__(self):
         return f"{self.chapter.title} - Page {self.page_number}"

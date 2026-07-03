@@ -1,3 +1,4 @@
+from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -6,7 +7,11 @@ from .models import Book, BookPage, Category, Chapter
 
 def web_home(request):
     """Website home page: featured books, intro, contact aur footer dikhata hai."""
-    books = Book.objects.filter(is_published=True).select_related("category")[:5]
+    books = (
+        Book.objects.filter(is_published=True)
+        .select_related("category")
+        .only("id", "title", "slug", "cover_image", "category__id", "category__name", "category__slug")
+    )[:5]
     categories = Category.objects.all()
     return render(
         request,
@@ -20,7 +25,11 @@ def web_home(request):
 
 def web_book_list(request):
     """Uploaded/published books ko catalog UI me dikhata hai."""
-    books = Book.objects.filter(is_published=True).select_related("category")
+    books = (
+        Book.objects.filter(is_published=True)
+        .select_related("category")
+        .only("id", "title", "slug", "cover_image", "category__id", "category__name", "category__slug")
+    )
     categories = Category.objects.all()
     return render(
         request,
@@ -140,7 +149,8 @@ def web_divine_quotes(request):
 def web_book_detail(request, slug):
     """Ek book ka detail page aur vishay suchi dikhata hai."""
     book = get_object_or_404(Book.objects.select_related("category"), slug=slug, is_published=True)
-    chapters = Chapter.objects.filter(book=book).prefetch_related("pages")
+    chapter_pages = BookPage.objects.only("id", "chapter_id", "title", "page_number").order_by("page_number", "id")
+    chapters = Chapter.objects.filter(book=book).prefetch_related(Prefetch("pages", queryset=chapter_pages))
     first_page = (
         BookPage.objects.filter(chapter__book=book)
         .order_by("chapter__order", "chapter__id", "page_number", "id")
@@ -166,6 +176,38 @@ def web_chapter_start(request, chapter_id):
     return redirect("web_book_detail", slug=chapter.book.slug)
 
 
+def _page_position_filter(page, direction):
+    """Current page se pehle/baad wale pages ko DB level par filter karta hai."""
+    chapter_order = page.chapter.order
+    chapter_id = page.chapter_id
+    page_number = page.page_number
+
+    if direction == "previous":
+        return (
+            Q(chapter__order__lt=chapter_order)
+            | Q(chapter__order=chapter_order, chapter_id__lt=chapter_id)
+            | Q(chapter__order=chapter_order, chapter_id=chapter_id, page_number__lt=page_number)
+            | Q(chapter__order=chapter_order, chapter_id=chapter_id, page_number=page_number, id__lt=page.id)
+        )
+
+    return (
+        Q(chapter__order__gt=chapter_order)
+        | Q(chapter__order=chapter_order, chapter_id__gt=chapter_id)
+        | Q(chapter__order=chapter_order, chapter_id=chapter_id, page_number__gt=page_number)
+        | Q(chapter__order=chapter_order, chapter_id=chapter_id, page_number=page_number, id__gt=page.id)
+    )
+
+
+def _ordered_pages_for_book(book):
+    """Book ke pages ka common ordered queryset banata hai."""
+    return BookPage.objects.filter(chapter__book=book).select_related("chapter").order_by(
+        "chapter__order",
+        "chapter__id",
+        "page_number",
+        "id",
+    )
+
+
 def _reader_context(page):
     """Reader ke liye current, previous aur next page data ready karta hai."""
     page = get_object_or_404(
@@ -173,23 +215,50 @@ def _reader_context(page):
         id=page.id,
     )
     book = page.chapter.book
-    book_pages = list(
-        BookPage.objects.filter(chapter__book=book)
-        .select_related("chapter")
-        .order_by("chapter__order", "chapter__id", "page_number", "id")
-    )
-    page_ids = [book_page.id for book_page in book_pages]
-    current_index = page_ids.index(page.id)
-    previous_page = book_pages[current_index - 1] if current_index > 0 else None
-    next_page = book_pages[current_index + 1] if current_index < len(book_pages) - 1 else None
+    book_pages = _ordered_pages_for_book(book)
+    previous_filter = _page_position_filter(page, "previous")
+    next_filter = _page_position_filter(page, "next")
+    previous_page = book_pages.filter(previous_filter).order_by(
+        "-chapter__order",
+        "-chapter__id",
+        "-page_number",
+        "-id",
+    ).first()
+    next_page = book_pages.filter(next_filter).first()
+    current_index = book_pages.filter(previous_filter).count() + 1
 
     return {
         "book": book,
         "page": page,
         "previous_page": previous_page,
         "next_page": next_page,
-        "current_index": current_index + 1,
-        "total_pages": len(book_pages),
+        "current_index": current_index,
+        "total_pages": book_pages.count(),
+    }
+
+
+def _reader_payload(request, context):
+    """Reader page ko JSON format me bhejne ke liye lightweight payload banata hai."""
+    current_page = context["page"]
+    previous_page = context["previous_page"]
+    next_page = context["next_page"]
+    image_url = request.build_absolute_uri(current_page.page_image.url) if current_page.page_image else ""
+    next_image_url = request.build_absolute_uri(next_page.page_image.url) if next_page and next_page.page_image else ""
+    previous_image_url = (
+        request.build_absolute_uri(previous_page.page_image.url) if previous_page and previous_page.page_image else ""
+    )
+    return {
+        "id": current_page.id,
+        "title": current_page.title or current_page.chapter.title,
+        "content": current_page.content,
+        "image_url": image_url,
+        "next_image_url": next_image_url,
+        "previous_image_url": previous_image_url,
+        "reader_url": request.build_absolute_uri(f"/web/reader/{current_page.id}/"),
+        "previous_id": previous_page.id if previous_page else None,
+        "next_id": next_page.id if next_page else None,
+        "current_index": context["current_index"],
+        "total_pages": context["total_pages"],
     }
 
 
@@ -197,6 +266,7 @@ def web_reader_page(request, page_id):
     """Reader page: current PDF page dikhata hai."""
     page = get_object_or_404(BookPage, id=page_id)
     context = _reader_context(page)
+    context["reader_payload"] = _reader_payload(request, context)
     return render(
         request,
         "library/web/reader.html",
@@ -208,22 +278,6 @@ def web_reader_page_data(request, page_id):
     """Next/previous click par JavaScript ko fast reader data deta hai."""
     page = get_object_or_404(BookPage, id=page_id)
     context = _reader_context(page)
-    current_page = context["page"]
-    previous_page = context["previous_page"]
-    next_page = context["next_page"]
-
-    image_url = request.build_absolute_uri(current_page.page_image.url) if current_page.page_image else ""
-    reader_url = request.build_absolute_uri(f"/web/reader/{current_page.id}/")
-    return JsonResponse(
-        {
-            "id": current_page.id,
-            "title": current_page.title or current_page.chapter.title,
-            "content": current_page.content,
-            "image_url": image_url,
-            "reader_url": reader_url,
-            "previous_id": previous_page.id if previous_page else None,
-            "next_id": next_page.id if next_page else None,
-            "current_index": context["current_index"],
-            "total_pages": context["total_pages"],
-        }
-    )
+    response = JsonResponse(_reader_payload(request, context))
+    response["Cache-Control"] = "public, max-age=300"
+    return response
