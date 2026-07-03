@@ -14,15 +14,23 @@
   <section class="patrika-grid" aria-label="Patrika list">
     {% for magazine in magazines %}
       <article class="patrika-card">
-        <div class="patrika-cover">{{ magazine.cover }}</div>
+        <div class="patrika-cover">
+          {% if magazine.cover_image %}
+            <img src="{{ magazine.cover_image.url }}" alt="{{ magazine.title }}">
+          {% else %}
+            {{ magazine.cover_text|default:magazine.title }}
+          {% endif %}
+        </div>
         <div class="patrika-info">
           <h2>{{ magazine.title }}</h2>
           <p>{{ magazine.subtitle }}</p>
-          <p>भाषा: {{ magazine.language }} <strong>Issues: {{ magazine.issues }}</strong></p>
-          <p>Latest issue: {{ magazine.latest }}</p>
-          <a class="patrika-button" href="#">सभी अंक देखें →</a>
+          <p>भाषा: {{ magazine.language }} <strong>Issues: {{ magazine.issues.count }}</strong></p>
+          <p>Latest issue: {% with latest=magazine.issues.first %}{% if latest %}{{ latest.title }}{% else %}अभी कोई अंक नहीं{% endif %}{% endwith %}</p>
+          <a class="patrika-button" href="{% url 'web_patrika_issue_list' magazine.slug %}">सभी अंक देखें →</a>
         </div>
       </article>
+    {% empty %}
+      <div class="empty">Admin panel से patrika add करने के बाद यहां दिखेगी.</div>
     {% endfor %}
   </section>
 </main>

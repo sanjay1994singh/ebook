@@ -1199,6 +1199,12 @@
       box-shadow: 0 12px 22px rgba(38, 14, 0, .24);
     }
 
+    .patrika-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     .patrika-card:nth-child(3) .patrika-cover {
       background: radial-gradient(circle at 52% 48%, #dac28c, #7a5038 64%, #3e231b 100%);
     }
@@ -1242,6 +1248,176 @@
       color: #fff;
       font-size: 14px;
       font-weight: 850;
+    }
+
+    .issue-page {
+      background: #fff5db;
+      min-height: 680px;
+      padding: 42px 0 78px;
+    }
+
+    .issue-detail-card {
+      width: min(880px, calc(100% - 28px));
+      margin: 0 auto;
+      background: #fffaf0;
+      border: 1px solid #efd9aa;
+      padding: 28px;
+    }
+
+    .issue-main {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 54px;
+      align-items: start;
+    }
+
+    .issue-cover-large {
+      width: 170px;
+      height: 240px;
+      border: 1px solid #efd9aa;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      padding: 10px;
+      color: #b72028;
+      font-size: 22px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .issue-cover-large img,
+    .issue-cover-small img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .issue-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 28px;
+      color: #ff781f;
+    }
+
+    .issue-title-row h2 {
+      color: #4c2b22;
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .issue-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border: 1px solid #ff9c4b;
+      color: #7d3720;
+      margin-bottom: 18px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .issue-meta-grid span,
+    .issue-meta-grid strong {
+      padding: 11px 8px;
+      border-right: 1px solid #ff9c4b;
+    }
+
+    .issue-meta-grid strong:last-child {
+      border-right: 0;
+    }
+
+    .issue-progress strong {
+      display: block;
+      font-size: 11px;
+      color: #6d3b2c;
+      margin-bottom: 8px;
+    }
+
+    .issue-progress span {
+      display: block;
+      width: 160px;
+      height: 9px;
+      border-radius: 20px;
+      background: linear-gradient(90deg, #ff5e19 16%, #e4ded3 16%);
+    }
+
+    .issue-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .issue-actions a,
+    .issue-actions span {
+      background: #ff6f1a;
+      color: #fff;
+      border-radius: 4px;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .issue-actions .disabled {
+      background: #b8a997;
+    }
+
+    .issue-tabs {
+      display: flex;
+      gap: 44px;
+      border-bottom: 1px solid #f4b35b;
+      margin-top: 32px;
+      color: #5b3227;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .issue-tabs span {
+      padding: 0 0 12px;
+    }
+
+    .issue-tabs .active {
+      color: #ff6f1a;
+      border-bottom: 3px solid #ff6f1a;
+    }
+
+    .issue-card-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(110px, 1fr));
+      gap: 24px;
+      margin-top: 28px;
+    }
+
+    .issue-card-small {
+      border: 1px solid #efd9aa;
+      background: #fff7eb;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .issue-card-small a {
+      color: #4b2c25;
+      text-decoration: none;
+    }
+
+    .issue-cover-small {
+      width: 92px;
+      height: 132px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 10px;
+      background: #fff;
+      color: #b72028;
+      font-size: 14px;
+      font-weight: 900;
+      overflow: hidden;
+    }
+
+    .issue-card-small h3 {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.35;
     }
 
     .audio-page {

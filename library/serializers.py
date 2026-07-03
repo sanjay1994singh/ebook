@@ -1,6 +1,17 @@
 from rest_framework import serializers
 
-from .models import AudioCategory, AudioTrack, Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
+from .models import (
+    AudioCategory,
+    AudioTrack,
+    Book,
+    BookPage,
+    Category,
+    Chapter,
+    FavoriteBook,
+    Magazine,
+    MagazineIssue,
+    ReadingProgress,
+)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -71,6 +82,60 @@ class BookListSerializer(serializers.ModelSerializer):
 class BookDetailSerializer(BookListSerializer):
     class Meta(BookListSerializer.Meta):
         fields = BookListSerializer.Meta.fields + ("description", "created_at", "updated_at")
+
+
+class MagazineSerializer(serializers.ModelSerializer):
+    cover_image_url = serializers.SerializerMethodField()
+    issue_count = serializers.IntegerField(source="issues.count", read_only=True)
+
+    class Meta:
+        model = Magazine
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "subtitle",
+            "language",
+            "cover_image_url",
+            "cover_text",
+            "issue_count",
+        )
+
+    def get_cover_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.cover_image and request:
+            return request.build_absolute_uri(obj.cover_image.url)
+        return None
+
+
+class MagazineIssueSerializer(serializers.ModelSerializer):
+    magazine = MagazineSerializer(read_only=True)
+    cover_image_url = serializers.SerializerMethodField()
+    book_detail = BookListSerializer(source="book", read_only=True)
+
+    class Meta:
+        model = MagazineIssue
+        fields = (
+            "id",
+            "magazine",
+            "title",
+            "slug",
+            "year",
+            "month",
+            "issue_number",
+            "language",
+            "cover_image_url",
+            "book",
+            "book_detail",
+        )
+
+    def get_cover_image_url(self, obj):
+        request = self.context.get("request")
+        if obj.cover_image and request:
+            return request.build_absolute_uri(obj.cover_image.url)
+        if obj.magazine and obj.magazine.cover_image and request:
+            return request.build_absolute_uri(obj.magazine.cover_image.url)
+        return None
 
 
 class ChapterSerializer(serializers.ModelSerializer):

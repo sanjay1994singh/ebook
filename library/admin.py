@@ -8,6 +8,8 @@ from .models import (
     Category,
     Chapter,
     FavoriteBook,
+    Magazine,
+    MagazineIssue,
     ReadingProgress,
 )
 from .pdf_importer import extract_pdf_to_book
@@ -41,6 +43,72 @@ class AudioTrackAdmin(admin.ModelAdmin):
     list_filter = ("category", "language", "is_free", "is_published")
     search_fields = ("title", "speaker", "description")
     prepopulated_fields = {"slug": ("title",)}
+
+
+class MagazineIssueInline(admin.TabularInline):
+    model = MagazineIssue
+    extra = 1
+    fields = ("title", "year", "month", "issue_number", "is_published", "order")
+
+
+@admin.register(Magazine)
+class MagazineAdmin(admin.ModelAdmin):
+    list_display = ("title", "language", "is_published", "order")
+    list_filter = ("language", "is_published")
+    search_fields = ("title", "subtitle")
+    prepopulated_fields = {"slug": ("title",)}
+    inlines = [MagazineIssueInline]
+
+
+@admin.register(MagazineIssue)
+class MagazineIssueAdmin(admin.ModelAdmin):
+    list_display = ("title", "magazine", "year", "month", "issue_number", "is_published", "order")
+    list_filter = ("magazine", "language", "is_published")
+    search_fields = ("title", "magazine__title")
+    prepopulated_fields = {"slug": ("title",)}
+    actions = ["extract_selected_issue_pdfs"]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        book = self._sync_issue_book(obj)
+        if obj.pdf_file and obj.auto_extract_pdf and ("pdf_file" in form.changed_data or not change):
+            pages = extract_pdf_to_book(book)
+            self.message_user(request, f"Magazine issue PDF imported successfully. {pages} pages created.")
+
+    def _sync_issue_book(self, issue):
+        category, _created = Category.objects.get_or_create(
+            slug="patrika",
+            defaults={"name": "पत्रिकाएं", "order": 50},
+        )
+        book = issue.book or Book()
+        book.title = issue.title
+        book.slug = f"patrika-{issue.slug}"[:240]
+        book.category = category
+        book.language = issue.language
+        book.is_published = issue.is_published
+        book.order = issue.order
+        if issue.pdf_file:
+            book.pdf_file = issue.pdf_file
+        if issue.cover_image:
+            book.cover_image = issue.cover_image
+        book.auto_extract_pdf = False
+        book.save()
+        if issue.book_id != book.id:
+            issue.book = book
+            issue.save(update_fields=["book", "updated_at"])
+        return book
+
+    @admin.action(description="Extract PDF pages for selected patrika issues")
+    def extract_selected_issue_pdfs(self, request, queryset):
+        total_pages = 0
+        total_issues = 0
+        for issue in queryset:
+            if not issue.pdf_file:
+                continue
+            book = self._sync_issue_book(issue)
+            total_pages += extract_pdf_to_book(book)
+            total_issues += 1
+        self.message_user(request, f"Imported {total_pages} pages from {total_issues} patrika issues.")
 
 
 @admin.register(Book)

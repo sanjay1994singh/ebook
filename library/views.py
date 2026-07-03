@@ -1,6 +1,17 @@
 from rest_framework import generics, permissions
 
-from .models import AudioCategory, AudioTrack, Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
+from .models import (
+    AudioCategory,
+    AudioTrack,
+    Book,
+    BookPage,
+    Category,
+    Chapter,
+    FavoriteBook,
+    Magazine,
+    MagazineIssue,
+    ReadingProgress,
+)
 from .pagination import StandardResultsSetPagination
 from .serializers import (
     AudioCategorySerializer,
@@ -12,6 +23,8 @@ from .serializers import (
     CategorySerializer,
     ChapterSerializer,
     FavoriteBookSerializer,
+    MagazineIssueSerializer,
+    MagazineSerializer,
     ReadingProgressSerializer,
 )
 
@@ -65,6 +78,24 @@ class BookDetailView(generics.RetrieveAPIView):
     queryset = Book.objects.filter(is_published=True).select_related("category")
     serializer_class = BookDetailSerializer
     lookup_field = "slug"
+
+
+class MagazineListView(generics.ListAPIView):
+    queryset = Magazine.objects.filter(is_published=True).prefetch_related("issues")
+    serializer_class = MagazineSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class MagazineIssueListView(generics.ListAPIView):
+    serializer_class = MagazineIssueSerializer
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        return (
+            MagazineIssue.objects.filter(magazine__slug=self.kwargs["slug"], magazine__is_published=True, is_published=True)
+            .select_related("magazine", "book", "book__category")
+            .order_by("order", "-year", "-issue_number", "title")
+        )
 
 
 class ChapterListView(generics.ListAPIView):

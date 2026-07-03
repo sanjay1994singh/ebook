@@ -1,0 +1,135 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}site-shell{% endblock %}
+{% block title %}{{ magazine.title }}{% endblock %}
+
+{% block body %}
+{% include "library/web/partials/site_header.html" %}
+<section class="site-hero">
+  <h1>{{ magazine.title }}</h1>
+  <span>होम / पत्रिकाएं / {{ magazine.title }}</span>
+</section>
+
+<main class="issue-page">
+  <section class="issue-detail-card">
+    {% if active_issue %}
+      <div class="issue-main">
+        <div class="issue-cover-large">
+          {% if active_issue.cover_image %}
+            <img src="{{ active_issue.cover_image.url }}" alt="{{ active_issue.title }}">
+          {% elif magazine.cover_image %}
+            <img src="{{ magazine.cover_image.url }}" alt="{{ active_issue.title }}">
+          {% else %}
+            <span>{{ magazine.cover_text|default:magazine.title }}</span>
+          {% endif %}
+        </div>
+
+        <div class="issue-info-main">
+          <div class="issue-title-row">
+            <h2>{{ active_issue.title }}</h2>
+            <span>♡ ⛶</span>
+          </div>
+
+          <div class="issue-meta-grid">
+            <span>वर्ष</span><strong>{{ active_issue.year|default:"-" }}</strong>
+            <span>महीना</span><strong>{{ active_issue.month|default:"-" }}</strong>
+            <span>संख्या</span><strong>{{ active_issue.issue_number|default:"-" }}</strong>
+          </div>
+
+          <div class="issue-progress">
+            <strong>0 %</strong>
+            <span></span>
+          </div>
+
+          <div class="issue-actions">
+            {% if active_first_page %}
+              <a href="{% url 'web_reader_page' active_first_page.id %}">आरंभ से पढ़ें</a>
+              <a href="{% url 'web_reader_page' active_first_page.id %}">पढ़ना जारी रखें</a>
+            {% else %}
+              <span class="disabled">PDF upload/extract करें</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="issue-tabs">
+        <span class="active">{{ magazine.title }}</span>
+        <span>विषय सूची</span>
+      </div>
+
+      <section class="issue-card-row">
+        {% for card in issue_cards %}
+          <article class="issue-card-small">
+            <a href="{% if card.first_page %}{% url 'web_reader_page' card.first_page.id %}{% else %}#{% endif %}">
+              <div class="issue-cover-small">
+                {% if card.issue.cover_image %}
+                  <img src="{{ card.issue.cover_image.url }}" alt="{{ card.issue.title }}">
+                {% elif magazine.cover_image %}
+                  <img src="{{ magazine.cover_image.url }}" alt="{{ card.issue.title }}">
+                {% else %}
+                  <span>{{ magazine.cover_text|default:magazine.title }}</span>
+                {% endif %}
+              </div>
+              <h3>{{ card.issue.title }}</h3>
+            </a>
+          </article>
+        {% endfor %}
+      </section>
+
+      {% if page_obj.has_other_pages %}
+        <div class="pagination-row real-pagination" aria-label="Pagination">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">«</a>
+          {% else %}
+            <span>«</span>
+          {% endif %}
+
+          {% for page_number in paginator.page_range %}
+            {% if page_number == page_obj.number %}
+              <span class="active">{{ page_number }}</span>
+            {% elif page_number >= page_obj.number|add:"-2" and page_number <= page_obj.number|add:"2" %}
+              <a href="?page={{ page_number }}">{{ page_number }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">»</a>
+          {% else %}
+            <span>»</span>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty">इस पत्रिका में अभी कोई अंक नहीं है. Admin panel से अंक upload करें.</div>
+    {% endif %}
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <section>
+      <h3>महत्वपूर्ण परिचय</h3>
+      <p>निकुंज रस</p>
+      <p>श्री हरिदासी परम्परा</p>
+      <p>श्री धाम वृन्दावन</p>
+    </section>
+    <section>
+      <h3>विषय</h3>
+      <p>ई - पुस्तकें</p>
+      <p>पत्रिकाएं</p>
+      <p>ऑडियो</p>
+      <p>अमृत वचन</p>
+    </section>
+    <section>
+      <h3>हमारी सेवा</h3>
+      <p>सत्संग</p>
+      <p>नाम जप</p>
+      <p>रस वाणी</p>
+    </section>
+    <section>
+      <h3>App</h3>
+      <div class="qr-box" aria-label="QR code"></div>
+    </section>
+  </div>
+</footer>
+{% endblock %}

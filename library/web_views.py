@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import AudioTrack, Book, BookPage, Category, Chapter
+from .models import AudioTrack, Book, BookPage, Category, Chapter, Magazine, MagazineIssue
 
 
 def _paginate_queryset(request, queryset, per_page):
@@ -97,7 +97,48 @@ def web_patrika_list(request):
             "cover": "विवेक वाणी",
         },
     ]
+    magazines = Magazine.objects.filter(is_published=True).prefetch_related("issues")
     return render(request, "library/web/patrika_list.html", {"magazines": magazines})
+
+
+def _first_page_for_book(book):
+    if not book:
+        return None
+    return (
+        BookPage.objects.filter(chapter__book=book)
+        .order_by("chapter__order", "chapter__id", "page_number", "id")
+        .first()
+    )
+
+
+def web_patrika_issue_list(request, slug):
+    """Selected patrika ke sabhi ank dikhata hai."""
+    magazine = get_object_or_404(Magazine, slug=slug, is_published=True)
+    issue_queryset = (
+        MagazineIssue.objects.filter(magazine=magazine, is_published=True)
+        .select_related("book")
+        .order_by("order", "-year", "-issue_number", "title")
+    )
+    page_obj = _paginate_queryset(request, issue_queryset, 10)
+    issue_cards = [
+        {"issue": issue, "first_page": _first_page_for_book(issue.book)}
+        for issue in page_obj.object_list
+    ]
+    active_issue = page_obj.object_list[0] if page_obj.object_list else None
+    active_first_page = _first_page_for_book(active_issue.book) if active_issue else None
+    return render(
+        request,
+        "library/web/patrika_issue_list.html",
+        {
+            "magazine": magazine,
+            "issue_cards": issue_cards,
+            "active_issue": active_issue,
+            "active_first_page": active_first_page,
+            "page_obj": page_obj,
+            "paginator": page_obj.paginator,
+            "total_count": page_obj.paginator.count,
+        },
+    )
 
 
 def web_audio_list(request):

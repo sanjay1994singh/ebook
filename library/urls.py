@@ -9,11 +9,15 @@ from .views import (
     ChapterListView,
     FavoriteDeleteView,
     FavoriteListCreateView,
+    MagazineIssueListView,
+    MagazineListView,
     ReadingProgressListCreateView,
 )
 
 urlpatterns = [
     path("categories/", CategoryListView.as_view(), name="category_list"),
+    path("magazines/", MagazineListView.as_view(), name="magazine_list"),
+    path("magazines/<slug:slug>/issues/", MagazineIssueListView.as_view(), name="magazine_issue_list"),
     path("", BookListView.as_view(), name="book_list"),
     path("favorites/", FavoriteListCreateView.as_view(), name="favorite_list_create"),
     path("favorites/<int:book_id>/", FavoriteDeleteView.as_view(), name="favorite_delete"),

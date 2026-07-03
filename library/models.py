@@ -77,6 +77,58 @@ class AudioTrack(models.Model):
         return self.title
 
 
+class Magazine(models.Model):
+    title = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    subtitle = models.CharField(max_length=180, blank=True)
+    language = models.CharField(max_length=80, default="हिन्दी")
+    cover_image = models.ImageField(upload_to="magazine_covers/", blank=True, null=True)
+    cover_text = models.CharField(max_length=80, blank=True)
+    is_published = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("order", "title")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
+class MagazineIssue(models.Model):
+    magazine = models.ForeignKey(Magazine, on_delete=models.CASCADE, related_name="issues")
+    title = models.CharField(max_length=220)
+    slug = models.SlugField(max_length=240, unique=True, blank=True)
+    year = models.CharField(max_length=20, blank=True)
+    month = models.CharField(max_length=40, blank=True)
+    issue_number = models.CharField(max_length=30, blank=True)
+    language = models.CharField(max_length=80, default="हिन्दी")
+    cover_image = models.ImageField(upload_to="magazine_issue_covers/", blank=True, null=True)
+    pdf_file = models.FileField(upload_to="magazine_issue_pdfs/", blank=True, null=True)
+    book = models.OneToOneField("Book", on_delete=models.SET_NULL, null=True, blank=True, related_name="magazine_issue")
+    auto_extract_pdf = models.BooleanField(default=True)
+    is_published = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("order", "-year", "-issue_number", "title")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = f"{self.magazine.title}-{self.year}-{self.issue_number}".strip("-")
+            self.slug = slugify(base_slug or self.title, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+
 class Book(models.Model):
     title = models.CharField(max_length=220)
     slug = models.SlugField(max_length=240, unique=True, blank=True)
