@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions
 
 from .models import AudioCategory, AudioTrack, Book, BookPage, Category, Chapter, FavoriteBook, ReadingProgress
+from .pagination import StandardResultsSetPagination
 from .serializers import (
     AudioCategorySerializer,
     AudioTrackSerializer,
@@ -27,6 +28,7 @@ class AudioCategoryListView(generics.ListAPIView):
 
 class AudioTrackListView(generics.ListAPIView):
     serializer_class = AudioTrackSerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         queryset = AudioTrack.objects.filter(is_published=True).select_related("category")
@@ -48,6 +50,7 @@ class FreeAudioTrackListView(generics.ListAPIView):
 
 class BookListView(generics.ListAPIView):
     serializer_class = BookListSerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         # Only published books mobile app me dikhengi.

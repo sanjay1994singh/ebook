@@ -1,8 +1,16 @@
 from django.db.models import Prefetch, Q
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import AudioTrack, Book, BookPage, Category, Chapter
+
+
+def _paginate_queryset(request, queryset, per_page):
+    """Web pages ke liye safe page object banata hai."""
+    paginator = Paginator(queryset, per_page)
+    page_number = request.GET.get("page")
+    return paginator.get_page(page_number)
 
 
 def web_home(request):
@@ -25,17 +33,21 @@ def web_home(request):
 
 def web_book_list(request):
     """Uploaded/published books ko catalog UI me dikhata hai."""
-    books = (
+    books_queryset = (
         Book.objects.filter(is_published=True)
         .select_related("category")
         .only("id", "title", "slug", "cover_image", "category__id", "category__name", "category__slug")
     )
+    page_obj = _paginate_queryset(request, books_queryset, 12)
     categories = Category.objects.all()
     return render(
         request,
         "library/web/book_list.html",
         {
-            "books": books,
+            "books": page_obj.object_list,
+            "page_obj": page_obj,
+            "paginator": page_obj.paginator,
+            "total_count": page_obj.paginator.count,
             "categories": categories,
         },
     )
@@ -104,8 +116,18 @@ def web_audio_list(request):
         {"title": "06 प्रभु मिलन", "speaker": "रस वाणी", "duration": "01:20:12"},
         {"title": "02 संत कृपा", "speaker": "सत्संग", "duration": "00:17:09"},
     ]
-    audio_items = AudioTrack.objects.filter(is_published=True).select_related("category")
-    return render(request, "library/web/audio_list.html", {"audio_items": audio_items})
+    audio_queryset = AudioTrack.objects.filter(is_published=True).select_related("category")
+    page_obj = _paginate_queryset(request, audio_queryset, 10)
+    return render(
+        request,
+        "library/web/audio_list.html",
+        {
+            "audio_items": page_obj.object_list,
+            "page_obj": page_obj,
+            "paginator": page_obj.paginator,
+            "total_count": page_obj.paginator.count,
+        },
+    )
 
 
 def web_divine_quotes(request):

@@ -707,9 +707,27 @@
       font-weight: 800;
     }
 
+    .pagination-row a {
+      min-width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #bed0e4;
+      background: #fff;
+      color: #2f78bd;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
     .pagination-row .active {
       background: #1279d8;
       color: #fff;
+    }
+
+    .catalog-panel > .pagination-row:not(.real-pagination),
+    .audio-panel > .pagination-row:not(.real-pagination) {
+      display: none;
     }
 
     .site-footer {
