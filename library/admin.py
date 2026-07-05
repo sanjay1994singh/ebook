@@ -28,7 +28,7 @@ class BookPageInline(admin.TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "order")
+    list_display = ("name", "order")
     prepopulated_fields = {"slug": ("name",)}
 
 
