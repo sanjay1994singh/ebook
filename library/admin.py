@@ -34,7 +34,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(AudioCategory)
 class AudioCategoryAdmin(admin.ModelAdmin):
-    list_display = ("id","name", "slug", "order")
+    list_display = ("id","name", "order")
     prepopulated_fields = {"slug": ("name",)}
 
 
