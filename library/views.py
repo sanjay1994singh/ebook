@@ -1,7 +1,10 @@
 from rest_framework import generics, permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import (
     AudioCategory,
+    AudioSpeaker,
     AudioTrack,
     Book,
     BookPage,
@@ -15,6 +18,7 @@ from .models import (
 from .pagination import StandardResultsSetPagination
 from .serializers import (
     AudioCategorySerializer,
+    AudioSpeakerSerializer,
     AudioTrackSerializer,
     BookDetailSerializer,
     BookListSerializer,
@@ -39,26 +43,83 @@ class AudioCategoryListView(generics.ListAPIView):
     serializer_class = AudioCategorySerializer
 
 
+class AudioSpeakerModelListView(generics.ListAPIView):
+    queryset = AudioSpeaker.objects.all()
+    serializer_class = AudioSpeakerSerializer
+
+
 class AudioTrackListView(generics.ListAPIView):
     serializer_class = AudioTrackSerializer
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        queryset = AudioTrack.objects.filter(is_published=True).select_related("category")
+        queryset = AudioTrack.objects.filter(is_published=True).select_related("category", "speaker_ref")
         category = self.request.query_params.get("category")
+        speaker = self.request.query_params.get("speaker")
         free = self.request.query_params.get("free")
         if category:
             queryset = queryset.filter(category__slug=category)
+        if speaker:
+            if str(speaker).isdigit():
+                queryset = queryset.filter(speaker_ref_id=speaker)
+            else:
+                queryset = queryset.filter(speaker_ref__name=speaker) | queryset.filter(speaker=speaker)
         if free in {"1", "true", "True"}:
             queryset = queryset.filter(is_free=True)
         return queryset
+
+
+class AudioSpeakerListView(APIView):
+    def get(self, request):
+        # Category select hone ke baad speaker list return karta hai.
+        queryset = AudioTrack.objects.filter(is_published=True)
+        category = request.query_params.get("category")
+        if category:
+            queryset = queryset.filter(category__slug=category)
+
+        speaker_rows = (
+            queryset.exclude(speaker_ref=None)
+            .values("speaker_ref_id", "speaker_ref__name")
+            .distinct()
+            .order_by("speaker_ref__name")
+        )
+        speakers = []
+        used_names = set()
+        for row in speaker_rows:
+            speaker_name = row["speaker_ref__name"]
+            used_names.add(speaker_name)
+            speakers.append(
+                {
+                    "id": row["speaker_ref_id"],
+                    "name": speaker_name,
+                    "audio_count": queryset.filter(speaker_ref_id=row["speaker_ref_id"]).count(),
+                }
+            )
+
+        text_speaker_names = (
+            queryset.exclude(speaker="")
+            .values_list("speaker", flat=True)
+            .distinct()
+            .order_by("speaker")
+        )
+        for speaker in text_speaker_names:
+            if speaker in used_names:
+                continue
+            speakers.append(
+                {
+                    "id": speaker,
+                    "name": speaker,
+                    "audio_count": queryset.filter(speaker=speaker).count(),
+                }
+            )
+        return Response(speakers)
 
 
 class FreeAudioTrackListView(generics.ListAPIView):
     serializer_class = AudioTrackSerializer
 
     def get_queryset(self):
-        return AudioTrack.objects.filter(is_published=True, is_free=True).select_related("category")[:5]
+        return AudioTrack.objects.filter(is_published=True, is_free=True).select_related("category", "speaker_ref")[:5]
 
 
 class BookListView(generics.ListAPIView):

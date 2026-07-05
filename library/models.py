@@ -39,6 +39,24 @@ class AudioCategory(models.Model):
         return self.name
 
 
+class AudioSpeaker(models.Model):
+    name = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("order", "name")
+        verbose_name_plural = "Audio speakers"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
 class AudioTrack(models.Model):
     category = models.ForeignKey(
         AudioCategory,
@@ -49,6 +67,13 @@ class AudioTrack(models.Model):
     )
     title = models.CharField(max_length=240)
     slug = models.SlugField(max_length=240, unique=True, blank=True)
+    speaker_ref = models.ForeignKey(
+        AudioSpeaker,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tracks",
+    )
     speaker = models.CharField(max_length=180, blank=True)
     language = models.CharField(max_length=80, default="हिन्दी")
     duration = models.CharField(max_length=20, blank=True, help_text="Example: 00:15:39")

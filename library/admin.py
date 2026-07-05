@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     AudioCategory,
+    AudioSpeaker,
     AudioTrack,
     Book,
     BookPage,
@@ -37,12 +38,22 @@ class AudioCategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 
+@admin.register(AudioSpeaker)
+class AudioSpeakerAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "slug", "order")
+    search_fields = ("name",)
+    prepopulated_fields = {"slug": ("name",)}
+
+
 @admin.register(AudioTrack)
 class AudioTrackAdmin(admin.ModelAdmin):
-    list_display = ("title", "speaker", "category", "duration", "is_free", "is_published", "order")
-    list_filter = ("category", "language", "is_free", "is_published")
-    search_fields = ("title", "speaker", "description")
+    list_display = ("title", "speaker_name", "category", "duration", "is_free", "is_published", "order")
+    list_filter = ("category", "speaker_ref", "language", "is_free", "is_published")
+    search_fields = ("title", "speaker", "speaker_ref__name", "description")
     prepopulated_fields = {"slug": ("title",)}
+
+    def speaker_name(self, obj):
+        return obj.speaker_ref.name if obj.speaker_ref else obj.speaker
 
 
 class MagazineIssueInline(admin.TabularInline):

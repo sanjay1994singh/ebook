@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from .models import (
     AudioCategory,
+    AudioSpeaker,
     AudioTrack,
     Book,
     BookPage,
@@ -26,8 +27,16 @@ class AudioCategorySerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug", "order")
 
 
+class AudioSpeakerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AudioSpeaker
+        fields = ("id", "name", "slug", "order")
+
+
 class AudioTrackSerializer(serializers.ModelSerializer):
     category = AudioCategorySerializer(read_only=True)
+    speaker = serializers.SerializerMethodField()
+    speaker_id = serializers.IntegerField(source="speaker_ref_id", read_only=True)
     audio_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -37,6 +46,7 @@ class AudioTrackSerializer(serializers.ModelSerializer):
             "title",
             "slug",
             "category",
+            "speaker_id",
             "speaker",
             "language",
             "duration",
@@ -52,6 +62,11 @@ class AudioTrackSerializer(serializers.ModelSerializer):
         if obj.audio_file and request:
             return request.build_absolute_uri(obj.audio_file.url)
         return obj.external_url or None
+
+    def get_speaker(self, obj):
+        if obj.speaker_ref:
+            return obj.speaker_ref.name
+        return obj.speaker
 
 
 class BookListSerializer(serializers.ModelSerializer):
@@ -112,6 +127,8 @@ class MagazineIssueSerializer(serializers.ModelSerializer):
     magazine = MagazineSerializer(read_only=True)
     cover_image_url = serializers.SerializerMethodField()
     book_detail = BookListSerializer(source="book", read_only=True)
+    first_chapter = serializers.SerializerMethodField()
+    pages = serializers.SerializerMethodField()
 
     class Meta:
         model = MagazineIssue
@@ -127,6 +144,8 @@ class MagazineIssueSerializer(serializers.ModelSerializer):
             "cover_image_url",
             "book",
             "book_detail",
+            "first_chapter",
+            "pages",
         )
 
     def get_cover_image_url(self, obj):
@@ -136,6 +155,30 @@ class MagazineIssueSerializer(serializers.ModelSerializer):
         if obj.magazine and obj.magazine.cover_image and request:
             return request.build_absolute_uri(obj.magazine.cover_image.url)
         return None
+
+    def get_first_chapter(self, obj):
+        chapter = obj.book.chapters.order_by("order", "id").first() if obj.book else None
+        if not chapter:
+            return None
+        return {"id": chapter.id, "book": chapter.book_id, "title": chapter.title, "order": chapter.order}
+
+    def get_pages(self, obj):
+        request = self.context.get("request")
+        if not obj.book:
+            return []
+        pages = BookPage.objects.filter(chapter__book=obj.book).order_by("chapter__order", "chapter__id", "page_number", "id")
+        page_list = []
+        for page in pages:
+            page_list.append(
+                {
+                    "id": page.id,
+                    "chapter": page.chapter_id,
+                    "title": page.title,
+                    "page_number": page.page_number,
+                    "page_image_url": request.build_absolute_uri(page.page_image.url) if page.page_image and request else None,
+                }
+            )
+        return page_list
 
 
 class ChapterSerializer(serializers.ModelSerializer):
