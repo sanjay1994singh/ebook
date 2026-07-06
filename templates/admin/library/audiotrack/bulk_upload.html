@@ -5,6 +5,15 @@
   {{ block.super }}
   <link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
   <style>
+    .bulk-upload-note {
+      background: #fff8e5;
+      border: 1px solid #f0c36d;
+      border-radius: 4px;
+      color: #5f3f00;
+      margin: 0 0 16px;
+      padding: 12px 14px;
+    }
+
     .bulk-upload-form .form-row {
       overflow: visible;
     }
@@ -51,6 +60,11 @@
 
 {% block content %}
   <div id="content-main">
+    <div class="bulk-upload-note">
+      <strong>Note:</strong> Admin upload is only for small batches. With compression ON, upload maximum 3 files at once.
+      For 100+ audio files, upload folder to VPS and run <code>python manage.py import_audio_folder</code>.
+    </div>
+
     <form method="post" enctype="multipart/form-data" novalidate class="bulk-upload-form">
       {% csrf_token %}
       {% if form.non_field_errors %}
