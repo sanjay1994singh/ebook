@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='library' %}">Library</a>
+    &rsaquo; <a href="{% url 'admin:library_audiotrack_changelist' %}">Audio tracks</a>
+    &rsaquo; Bulk upload audio
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <fieldset class="module aligned">
+        <h2>Bulk upload audio tracks</h2>
+
+        {% for field in form %}
+          <div class="form-row">
+            <div>
+              {{ field.errors }}
+              {{ field.label_tag }}
+              {{ field }}
+              {% if field.help_text %}
+                <div class="help">{{ field.help_text }}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </fieldset>
+
+      <div class="submit-row">
+        <input type="submit" value="Upload audio files" class="default">
+        <a href="{% url 'admin:library_audiotrack_changelist' %}" class="closelink">Cancel</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}
