@@ -1,4 +1,44 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+  <style>
+    .bulk-upload-form .form-row {
+      overflow: visible;
+    }
+
+    .bulk-upload-form select,
+    .bulk-upload-form input[type="text"],
+    .bulk-upload-form input[type="file"] {
+      min-width: 320px;
+    }
+
+    .bulk-upload-form input[type="checkbox"] {
+      margin-top: 8px;
+    }
+
+    .bulk-upload-form .help {
+      margin-left: 170px;
+      padding-left: 10px;
+    }
+
+    @media (max-width: 767px) {
+      .bulk-upload-form select,
+      .bulk-upload-form input[type="text"],
+      .bulk-upload-form input[type="file"] {
+        min-width: 0;
+        width: 100%;
+      }
+
+      .bulk-upload-form .help {
+        margin-left: 0;
+        padding-left: 0;
+      }
+    }
+  </style>
+{% endblock %}
 
 {% block breadcrumbs %}
   <div class="breadcrumbs">
@@ -11,21 +51,28 @@
 
 {% block content %}
   <div id="content-main">
-    <form method="post" enctype="multipart/form-data" novalidate>
+    <form method="post" enctype="multipart/form-data" novalidate class="bulk-upload-form">
       {% csrf_token %}
+      {% if form.non_field_errors %}
+        <p class="errornote">Please correct the errors below.</p>
+        {{ form.non_field_errors }}
+      {% endif %}
+
       <fieldset class="module aligned">
         <h2>Bulk upload audio tracks</h2>
 
         {% for field in form %}
-          <div class="form-row">
-            <div>
-              {{ field.errors }}
-              {{ field.label_tag }}
+          <div class="form-row field-{{ field.name }}{% if field.errors %} errors{% endif %}">
+            {{ field.errors }}
+            <div class="flex-container">
+              <label{% if field.field.required %} class="required"{% endif %} for="{{ field.id_for_label }}">
+                {{ field.label }}:
+              </label>
               {{ field }}
-              {% if field.help_text %}
-                <div class="help">{{ field.help_text }}</div>
-              {% endif %}
             </div>
+            {% if field.help_text %}
+              <div class="help">{{ field.help_text }}</div>
+            {% endif %}
           </div>
         {% endfor %}
       </fieldset>
