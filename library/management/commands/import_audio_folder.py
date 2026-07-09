@@ -56,34 +56,36 @@ class Command(BaseCommand):
         skipped_count = 0
         failed_count = 0
 
-        self.stdout.write(f"Category: {category.id} - {category.name}")
-        self.stdout.write(f"Speaker: {speaker.id} - {speaker.name}")
-        self.stdout.write(f"Files found: {len(audio_files)}")
-        self.stdout.write(f"Compression: {'ON ' + options['bitrate'] if should_compress else 'OFF'}")
+        self._write_now(f"Category: {category.id} - {category.name}")
+        self._write_now(f"Speaker: {speaker.id} - {speaker.name}")
+        self._write_now(f"Files found: {len(audio_files)}")
+        self._write_now(f"Compression: {'ON ' + options['bitrate'] if should_compress else 'OFF'}")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_dir_path = Path(temp_dir)
             for index, audio_path in enumerate(audio_files, start=1):
                 title = self._title_from_filename(audio_path.name)
+                self._write_now(f"PROCESSING {index}/{len(audio_files)}: {audio_path.name}")
                 if audio_path.stat().st_size == 0:
                     skipped_count += 1
-                    self.stdout.write(self.style.WARNING(f"SKIP empty file: {audio_path.name}"))
+                    self._write_now(self.style.WARNING(f"SKIP empty file: {audio_path.name}"))
                     continue
 
                 if self._audio_already_exists(title, audio_path.name, category.id, speaker.id):
                     skipped_count += 1
-                    self.stdout.write(self.style.WARNING(f"SKIP duplicate: {title}"))
+                    self._write_now(self.style.WARNING(f"SKIP duplicate: {title}"))
                     continue
 
                 if options["dry_run"]:
                     created_count += 1
-                    self.stdout.write(self.style.SUCCESS(f"DRY RUN import: {title}"))
+                    self._write_now(self.style.SUCCESS(f"DRY RUN import: {title}"))
                     continue
 
                 try:
                     import_path = audio_path
                     import_filename = audio_path.name
                     if should_compress:
+                        self._write_now(f"COMPRESSING {index}/{len(audio_files)}: {audio_path.name}")
                         import_path = self._compress_audio(audio_path, temp_dir_path, options["bitrate"])
                         import_filename = f"{audio_path.stem}.mp3"
 
@@ -105,12 +107,12 @@ class Command(BaseCommand):
                     created_count += 1
                     original_size = self._format_size(audio_path.stat().st_size)
                     final_size = self._format_size(import_path.stat().st_size)
-                    self.stdout.write(self.style.SUCCESS(f"IMPORTED: {title} ({original_size} -> {final_size})"))
+                    self._write_now(self.style.SUCCESS(f"IMPORTED: {title} ({original_size} -> {final_size})"))
                 except Exception as error:
                     failed_count += 1
-                    self.stdout.write(self.style.ERROR(f"FAILED: {audio_path.name} - {error}"))
+                    self._write_now(self.style.ERROR(f"FAILED: {audio_path.name} - {error}"))
 
-        self.stdout.write(
+        self._write_now(
             self.style.SUCCESS(
                 f"Done. created={created_count}, skipped={skipped_count}, failed={failed_count}"
             )
@@ -188,3 +190,7 @@ class Command(BaseCommand):
     def _format_size(self, size_bytes):
         size_mb = size_bytes / (1024 * 1024)
         return f"{size_mb:.2f} MB"
+
+    def _write_now(self, message):
+        self.stdout.write(message)
+        self.stdout.flush()
