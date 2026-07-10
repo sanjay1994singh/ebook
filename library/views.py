@@ -34,7 +34,7 @@ from .serializers import (
 
 
 class CategoryListView(generics.ListAPIView):
-    queryset = Category.objects.all()
+    queryset = Category.objects.exclude(slug__in=["patrika", "magazine"])
     serializer_class = CategorySerializer
 
 
@@ -128,7 +128,12 @@ class BookListView(generics.ListAPIView):
 
     def get_queryset(self):
         # Only published books mobile app me dikhengi.
-        queryset = Book.objects.filter(is_published=True).select_related("category")
+        queryset = (
+            Book.objects.filter(is_published=True)
+            .filter(magazine_issue__isnull=True)
+            .exclude(category__slug__in=["patrika", "magazine"])
+            .select_related("category")
+        )
         category = self.request.query_params.get("category")
         if category:
             queryset = queryset.filter(category__slug=category)

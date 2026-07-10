@@ -8,6 +8,7 @@ urlpatterns = [
     path("", include("library.web_urls")),
     path("api/auth/", include("accounts.urls")),
     path("api/audio/", include("library.audio_urls")),
+    path("api/banners/", include("banners.urls")),
     path("api/books/", include("library.urls")),
     path("api/content/", include("content.urls")),
 ]

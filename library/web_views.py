@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from banners.models import Banner
 from .models import AudioTrack, Book, BookPage, Category, Chapter, Magazine, MagazineIssue
 
 
@@ -15,18 +16,27 @@ def _paginate_queryset(request, queryset, per_page):
 
 def web_home(request):
     """Website home page: featured books, intro, contact aur footer dikhata hai."""
+    home_banner = (
+        Banner.objects.filter(is_published=True, device__in=[Banner.DEVICE_ALL, Banner.DEVICE_DESKTOP])
+        .exclude(desktop_image="")
+        .order_by("order", "-id")
+        .first()
+    )
     books = (
         Book.objects.filter(is_published=True)
+        .filter(magazine_issue__isnull=True)
+        .exclude(category__slug__in=["patrika", "magazine"])
         .select_related("category")
         .only("id", "title", "slug", "cover_image", "category__id", "category__name", "category__slug")
     )[:5]
-    categories = Category.objects.all()
+    categories = Category.objects.exclude(slug__in=["patrika", "magazine"])
     return render(
         request,
         "library/web/home.html",
         {
             "books": books,
             "categories": categories,
+            "home_banner": home_banner,
         },
     )
 
@@ -35,11 +45,13 @@ def web_book_list(request):
     """Uploaded/published books ko catalog UI me dikhata hai."""
     books_queryset = (
         Book.objects.filter(is_published=True)
+        .filter(magazine_issue__isnull=True)
+        .exclude(category__slug__in=["patrika", "magazine"])
         .select_related("category")
         .only("id", "title", "slug", "cover_image", "category__id", "category__name", "category__slug")
     )
     page_obj = _paginate_queryset(request, books_queryset, 12)
-    categories = Category.objects.all()
+    categories = Category.objects.exclude(slug__in=["patrika", "magazine"])
     return render(
         request,
         "library/web/book_list.html",

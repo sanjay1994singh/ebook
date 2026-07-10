@@ -6,6 +6,19 @@
 {% block body %}
 {% include "library/web/partials/site_header.html" %}
 
+{% if home_banner %}
+  <section class="web-banner-ad">
+    {% if home_banner.link_url %}<a href="{{ home_banner.link_url }}" target="_blank" rel="noopener">{% endif %}
+      <picture>
+        {% if home_banner.mobile_image %}
+          <source media="(max-width: 700px)" srcset="{{ home_banner.mobile_image.url }}">
+        {% endif %}
+        <img src="{% if home_banner.desktop_image %}{{ home_banner.desktop_image.url }}{% else %}{{ home_banner.mobile_image.url }}{% endif %}" alt="{{ home_banner.title }}">
+      </picture>
+    {% if home_banner.link_url %}</a>{% endif %}
+  </section>
+{% endif %}
+
 <main class="featured-books">
   {% if books %}
     <section class="featured-book-row" aria-label="Featured books">
