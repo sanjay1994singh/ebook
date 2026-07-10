@@ -6,16 +6,29 @@
 {% block body %}
 {% include "library/web/partials/site_header.html" %}
 
-{% if home_banner %}
-  <section class="web-banner-ad">
-    {% if home_banner.link_url %}<a href="{{ home_banner.link_url }}" target="_blank" rel="noopener">{% endif %}
-      <picture>
-        {% if home_banner.mobile_image %}
-          <source media="(max-width: 700px)" srcset="{{ home_banner.mobile_image.url }}">
-        {% endif %}
-        <img src="{% if home_banner.desktop_image %}{{ home_banner.desktop_image.url }}{% else %}{{ home_banner.mobile_image.url }}{% endif %}" alt="{{ home_banner.title }}">
-      </picture>
-    {% if home_banner.link_url %}</a>{% endif %}
+{% if home_banners %}
+  <section class="web-banner-ad" data-banner-slider>
+    <button class="web-banner-arrow web-banner-prev" type="button" aria-label="Previous banner">‹</button>
+    <div class="web-banner-track">
+      {% for banner in home_banners %}
+        <article class="web-banner-slide{% if forloop.first %} active{% endif %}" data-slide-index="{{ forloop.counter0 }}">
+          {% if banner.link_url %}<a href="{{ banner.link_url }}" target="_blank" rel="noopener">{% endif %}
+            <picture>
+              {% if banner.mobile_image %}
+                <source media="(max-width: 700px)" srcset="{{ banner.mobile_image.url }}">
+              {% endif %}
+              <img src="{% if banner.desktop_image %}{{ banner.desktop_image.url }}{% else %}{{ banner.mobile_image.url }}{% endif %}" alt="{{ banner.title }}">
+            </picture>
+          {% if banner.link_url %}</a>{% endif %}
+        </article>
+      {% endfor %}
+    </div>
+    <button class="web-banner-arrow web-banner-next" type="button" aria-label="Next banner">›</button>
+    <div class="web-banner-dots" aria-label="Banner pagination">
+      {% for banner in home_banners %}
+        <button class="{% if forloop.first %}active{% endif %}" type="button" data-dot-index="{{ forloop.counter0 }}" aria-label="Show banner {{ forloop.counter }}"></button>
+      {% endfor %}
+    </div>
   </section>
 {% endif %}
 
@@ -106,4 +119,52 @@
     </section>
   </div>
 </footer>
+
+{% if home_banners %}
+  <script>
+    (() => {
+      const slider = document.querySelector("[data-banner-slider]");
+      if (!slider) return;
+
+      const slides = Array.from(slider.querySelectorAll(".web-banner-slide"));
+      const dots = Array.from(slider.querySelectorAll("[data-dot-index]"));
+      const previousButton = slider.querySelector(".web-banner-prev");
+      const nextButton = slider.querySelector(".web-banner-next");
+      let index = 0;
+      let touchStartX = 0;
+
+      const showSlide = (nextIndex) => {
+        index = (nextIndex + slides.length) % slides.length;
+        slides.forEach((slide, slideIndex) => slide.classList.toggle("active", slideIndex === index));
+        dots.forEach((dot, dotIndex) => dot.classList.toggle("active", dotIndex === index));
+      };
+
+      const showNext = () => showSlide(index + 1);
+      const showPrevious = () => showSlide(index - 1);
+
+      nextButton?.addEventListener("click", showNext);
+      previousButton?.addEventListener("click", showPrevious);
+      dots.forEach((dot) => dot.addEventListener("click", () => showSlide(Number(dot.dataset.dotIndex || 0))));
+
+      slider.addEventListener("touchstart", (event) => {
+        touchStartX = event.changedTouches[0]?.clientX || 0;
+      }, { passive: true });
+
+      slider.addEventListener("touchend", (event) => {
+        const touchEndX = event.changedTouches[0]?.clientX || 0;
+        if (touchStartX - touchEndX > 45) showNext();
+        if (touchEndX - touchStartX > 45) showPrevious();
+      }, { passive: true });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowRight") showNext();
+        if (event.key === "ArrowLeft") showPrevious();
+      });
+
+      if (slides.length > 1) {
+        setInterval(showNext, 2000);
+      }
+    })();
+  </script>
+{% endif %}
 {% endblock %}

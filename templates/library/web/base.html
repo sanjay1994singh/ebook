@@ -811,22 +811,94 @@
       background: #fff8ea;
       padding: 16px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
 
-    .web-banner-ad a,
-    .web-banner-ad picture {
-      display: block;
-    }
-
-    .web-banner-ad img {
-      display: block;
+    .web-banner-track {
       width: min(1120px, 100%);
       aspect-ratio: 16 / 4;
+      margin: 0 auto;
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 22px rgba(120, 70, 20, 0.12);
+      background: #fff;
+    }
+
+    .web-banner-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 260ms ease;
+    }
+
+    .web-banner-slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .web-banner-slide a,
+    .web-banner-slide picture {
+      display: block;
+      height: 100%;
+    }
+
+    .web-banner-slide img {
+      display: block;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       background: #fff;
-      margin: 0 auto;
+    }
+
+    .web-banner-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 3;
+      width: 42px;
+      height: 64px;
+      border: 0;
       border-radius: 8px;
-      box-shadow: 0 8px 22px rgba(120, 70, 20, 0.12);
+      background: rgba(255, 120, 31, 0.84);
+      color: #fff;
+      font-size: 42px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .web-banner-prev {
+      left: max(18px, calc((100% - 1120px) / 2 - 54px));
+    }
+
+    .web-banner-next {
+      right: max(18px, calc((100% - 1120px) / 2 - 54px));
+    }
+
+    .web-banner-dots {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 24px;
+      z-index: 4;
+      display: flex;
+      justify-content: center;
+      gap: 9px;
+    }
+
+    .web-banner-dots button {
+      width: 11px;
+      height: 11px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+    }
+
+    .web-banner-dots button.active {
+      background: var(--orange);
     }
 
     .featured-book-row {

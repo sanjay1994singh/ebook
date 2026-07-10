@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "library",
     "content",
     "banners",
+    "youtube_feed",
 ]
 
 MIDDLEWARE = [
@@ -128,6 +129,8 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+YOUTUBE_CHANNEL_HANDLE = os.getenv("YOUTUBE_CHANNEL_HANDLE", "@NidhivanRas")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

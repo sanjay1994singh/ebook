@@ -16,11 +16,10 @@ def _paginate_queryset(request, queryset, per_page):
 
 def web_home(request):
     """Website home page: featured books, intro, contact aur footer dikhata hai."""
-    home_banner = (
+    home_banners = (
         Banner.objects.filter(is_published=True, device__in=[Banner.DEVICE_ALL, Banner.DEVICE_DESKTOP])
         .exclude(desktop_image="")
         .order_by("order", "-id")
-        .first()
     )
     books = (
         Book.objects.filter(is_published=True)
@@ -36,7 +35,7 @@ def web_home(request):
         {
             "books": books,
             "categories": categories,
-            "home_banner": home_banner,
+            "home_banners": home_banners,
         },
     )
 

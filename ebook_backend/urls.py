@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/banners/", include("banners.urls")),
     path("api/books/", include("library.urls")),
     path("api/content/", include("content.urls")),
+    path("api/youtube/", include("youtube_feed.urls")),
 ]
 
 if settings.DEBUG:
