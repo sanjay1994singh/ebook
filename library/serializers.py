@@ -16,6 +16,7 @@ from .models import (
     MagazineIssue,
     ReadingProgress,
     SocialLink,
+    SideMenuItem,
 )
 
 
@@ -294,3 +295,9 @@ class SocialLinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialLink
         fields = ("id", "name", "label", "icon", "url", "color", "order")
+
+
+class SideMenuItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SideMenuItem
+        fields = ("id", "section", "title", "icon", "action", "url", "order")

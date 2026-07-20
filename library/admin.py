@@ -28,6 +28,7 @@ from .models import (
     MagazineIssue,
     ReadingProgress,
     SocialLink,
+    SideMenuItem,
 )
 from .pdf_importer import extract_pdf_to_book
 
@@ -372,3 +373,10 @@ class SocialLinkAdmin(admin.ModelAdmin):
     list_display = ("label", "name", "url", "order", "is_active")
     list_filter = ("is_active",)
     search_fields = ("label", "name", "url")
+
+
+@admin.register(SideMenuItem)
+class SideMenuItemAdmin(admin.ModelAdmin):
+    list_display = ("title", "section", "icon", "action", "order", "is_active")
+    list_filter = ("section", "is_active")
+    search_fields = ("title", "section", "action", "url")

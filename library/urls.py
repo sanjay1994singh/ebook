@@ -16,6 +16,7 @@ from .views import (
     MagazineListView,
     ReadingProgressListCreateView,
     SocialLinkListView,
+    SideMenuItemListView,
 )
 
 urlpatterns = [
@@ -30,6 +31,7 @@ urlpatterns = [
     path("app-rating/", AppRatingView.as_view(), name="app_rating"),
     path("contact-messages/", ContactMessageView.as_view(), name="contact_messages"),
     path("social-links/", SocialLinkListView.as_view(), name="social_links"),
+    path("side-menu/", SideMenuItemListView.as_view(), name="side_menu"),
     path("pages/<int:pk>/", BookPageDetailView.as_view(), name="book_page_detail"),
     path("chapters/<int:chapter_id>/pages/", ChapterPageListView.as_view(), name="chapter_page_list"),
     path("<slug:slug>/", BookDetailView.as_view(), name="book_detail"),

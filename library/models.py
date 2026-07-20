@@ -304,3 +304,19 @@ class SocialLink(models.Model):
 
     def __str__(self):
         return self.label
+
+
+class SideMenuItem(models.Model):
+    section = models.CharField(max_length=120, blank=True)
+    title = models.CharField(max_length=160)
+    icon = models.CharField(max_length=20, blank=True)
+    action = models.CharField(max_length=80, blank=True)
+    url = models.URLField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("order", "title")
+
+    def __str__(self):
+        return f"{self.section} - {self.title}" if self.section else self.title

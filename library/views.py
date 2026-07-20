@@ -18,6 +18,7 @@ from .models import (
     MagazineIssue,
     ReadingProgress,
     SocialLink,
+    SideMenuItem,
 )
 from .pagination import StandardResultsSetPagination
 from .serializers import (
@@ -38,6 +39,7 @@ from .serializers import (
     MagazineSerializer,
     ReadingProgressSerializer,
     SocialLinkSerializer,
+    SideMenuItemSerializer,
 )
 
 
@@ -313,3 +315,11 @@ class SocialLinkListView(generics.ListAPIView):
 
     def get_queryset(self):
         return SocialLink.objects.filter(is_active=True)
+
+
+class SideMenuItemListView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = SideMenuItemSerializer
+
+    def get_queryset(self):
+        return SideMenuItem.objects.filter(is_active=True)
