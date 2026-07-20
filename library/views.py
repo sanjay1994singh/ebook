@@ -149,8 +149,11 @@ class BookListView(generics.ListAPIView):
             .select_related("category")
         )
         category = self.request.query_params.get("category")
+        author = self.request.query_params.get("author")
         if category:
             queryset = queryset.filter(category__slug=category)
+        if author:
+            queryset = queryset.filter(author=author)
         return queryset
 
 
@@ -430,15 +433,16 @@ class AuthorMenuView(APIView):
 
     def get(self, request):
         # Top "Lekhak" tab ke liye real backend authors/speakers ko group karke bhejta hai.
+        sections = [
+            self.get_book_authors(),
+            self.get_audio_speakers("ऑडियो", "audio", exclude_special=True),
+            self.get_audio_speakers("प्रवचन", "pravachan", category_slug="pravachan"),
+            self.get_video_authors(),
+            self.get_article_authors(),
+        ]
         return Response(
             {
-                "sections": [
-                    self.get_book_authors(),
-                    self.get_audio_speakers("ऑडियो", "audio", exclude_special=True),
-                    self.get_audio_speakers("प्रवचन", "pravachan", category_slug="pravachan"),
-                    self.get_video_authors(),
-                    self.get_article_authors(),
-                ]
+                "sections": [section for section in sections if section["items"]]
             }
         )
 
@@ -508,15 +512,30 @@ class AuthorMenuView(APIView):
         return {"key": key, "title": title, "items": items}
 
     def get_video_authors(self):
+        try:
+            feed = get_channel_videos(force_refresh=False)
+            videos = feed.get("videos") or []
+            shorts = feed.get("shorts") or []
+        except Exception:
+            videos = []
+            shorts = []
+        count = len(videos) + len(shorts)
+        items = []
+        if count:
+            items.append({"id": "nidhivan-ras", "name": "Nidhivan Ras", "count": count, "type": "video"})
         return {
             "key": "video",
             "title": "वीडियो",
-            "items": [{"id": "nidhivan-ras", "name": "Nidhivan Ras", "count": 0, "type": "video"}],
+            "items": items,
         }
 
     def get_article_authors(self):
+        queryset = AmritVachan.objects.filter(is_published=True)
+        items = []
+        if queryset.exists():
+            items.append({"id": "amrit-vachan", "name": "अमृत वचन", "count": queryset.count(), "type": "amritVachan"})
         return {
             "key": "articles",
             "title": "अनमोल लेख",
-            "items": [{"id": "nikunj-ras", "name": "Nikunj Ras", "count": 0, "type": "articles"}],
+            "items": items,
         }
