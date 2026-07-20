@@ -29,6 +29,7 @@ from .models import (
     ReadingProgress,
     SocialLink,
     SideMenuItem,
+    Subject,
 )
 from .pdf_importer import extract_pdf_to_book
 
@@ -46,6 +47,14 @@ class BookPageInline(admin.TabularInline):
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "order")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ("name", "order", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
     prepopulated_fields = {"slug": ("name",)}
 
 
@@ -300,9 +309,10 @@ class MagazineIssueAdmin(admin.ModelAdmin):
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     list_display = ("title", "category", "language", "pdf_import_status", "pdf_page_count", "is_published", "order")
-    list_filter = ("category", "language", "pdf_import_status", "is_published")
+    list_filter = ("category", "subjects", "language", "pdf_import_status", "is_published")
     search_fields = ("title", "author", "description")
     prepopulated_fields = {"slug": ("title",)}
+    filter_horizontal = ("subjects",)
     inlines = [ChapterInline]
     actions = ["extract_selected_pdfs"]
 

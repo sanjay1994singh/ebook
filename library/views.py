@@ -1,3 +1,4 @@
+from django.db.models import Count, Q
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,6 +24,7 @@ from .models import (
     ReadingProgress,
     SocialLink,
     SideMenuItem,
+    Subject,
 )
 from .pagination import StandardResultsSetPagination
 from .serializers import (
@@ -44,12 +46,31 @@ from .serializers import (
     ReadingProgressSerializer,
     SocialLinkSerializer,
     SideMenuItemSerializer,
+    SubjectSerializer,
 )
 
 
 class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.exclude(slug__in=["patrika", "magazine"])
     serializer_class = CategorySerializer
+
+
+class SubjectListView(generics.ListAPIView):
+    serializer_class = SubjectSerializer
+
+    def get_queryset(self):
+        return (
+            Subject.objects.filter(is_active=True)
+            .annotate(
+                book_count=Count(
+                    "books",
+                    filter=Q(books__is_published=True, books__magazine_issue__isnull=True),
+                    distinct=True,
+                )
+            )
+            .filter(book_count__gt=0)
+            .order_by("order", "name")
+        )
 
 
 class AudioCategoryListView(generics.ListAPIView):
@@ -150,11 +171,14 @@ class BookListView(generics.ListAPIView):
         )
         category = self.request.query_params.get("category")
         author = self.request.query_params.get("author")
+        subject = self.request.query_params.get("subject")
         if category:
             queryset = queryset.filter(category__slug=category)
         if author:
             queryset = queryset.filter(author=author)
-        return queryset
+        if subject:
+            queryset = queryset.filter(subjects__slug=subject)
+        return queryset.distinct()
 
 
 class BookDetailView(generics.RetrieveAPIView):
@@ -330,6 +354,141 @@ class SideMenuItemListView(generics.ListAPIView):
 
     def get_queryset(self):
         return SideMenuItem.objects.filter(is_active=True)
+
+
+class TopCategoryListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        sections = [
+            self.get_book_section(),
+            self.get_magazine_section(),
+            self.get_audio_category_section("audio", "ऑडियो", exclude_special=True),
+            self.get_audio_category_section("pravachan", "प्रवचन", category_slug="pravachan"),
+            self.get_audio_category_section("satsang", "दैनिक सत्संग", category_slug="dainik-satsang"),
+            self.get_video_section(),
+            self.get_amrit_vachan_section(),
+        ]
+        return Response({"sections": [section for section in sections if section and section["items"]]})
+
+    def get_book_section(self):
+        categories = (
+            Category.objects.exclude(slug__in=["patrika", "magazine"])
+            .annotate(
+                item_count=Count(
+                    "books",
+                    filter=Q(books__is_published=True, books__magazine_issue__isnull=True),
+                    distinct=True,
+                )
+            )
+            .filter(item_count__gt=0)
+            .order_by("order", "name")
+        )
+        return {
+            "key": "books",
+            "title": "ई-पुस्तकें",
+            "items": [
+                {
+                    "id": category.id,
+                    "title": category.name,
+                    "slug": category.slug,
+                    "count": category.item_count,
+                    "type": "book_category",
+                }
+                for category in categories
+            ],
+        }
+
+    def get_magazine_section(self):
+        magazines = (
+            Magazine.objects.filter(is_published=True)
+            .annotate(item_count=Count("issues", filter=Q(issues__is_published=True), distinct=True))
+            .filter(item_count__gt=0)
+            .order_by("order", "title")
+        )
+        return {
+            "key": "magazines",
+            "title": "पत्रिकाएँ",
+            "items": [
+                {
+                    "id": magazine.id,
+                    "title": magazine.title,
+                    "slug": magazine.slug,
+                    "count": magazine.item_count,
+                    "type": "magazine",
+                }
+                for magazine in magazines
+            ],
+        }
+
+    def get_audio_category_section(self, key, title, category_slug=None, exclude_special=False):
+        categories = AudioCategory.objects.all()
+        if category_slug:
+            categories = categories.filter(slug=category_slug)
+        if exclude_special:
+            categories = categories.exclude(slug__in=["pravachan", "dainik-satsang"])
+        categories = (
+            categories.annotate(item_count=Count("tracks", filter=Q(tracks__is_published=True), distinct=True))
+            .filter(item_count__gt=0)
+            .order_by("order", "name")
+        )
+        return {
+            "key": key,
+            "title": title,
+            "items": [
+                {
+                    "id": category.id,
+                    "title": category.name,
+                    "slug": category.slug,
+                    "count": category.item_count,
+                    "type": "audio_category",
+                }
+                for category in categories
+            ],
+        }
+
+    def get_video_section(self):
+        try:
+            feed = get_channel_videos(force_refresh=False)
+            videos = feed.get("videos") or []
+            shorts = feed.get("shorts") or []
+        except Exception:
+            videos = []
+            shorts = []
+        total_count = len(videos) + len(shorts)
+        if total_count <= 0:
+            return None
+        return {
+            "key": "video",
+            "title": "वीडियो",
+            "items": [
+                {
+                    "id": "youtube",
+                    "title": "वीडियो",
+                    "slug": "youtube",
+                    "count": total_count,
+                    "type": "video",
+                }
+            ],
+        }
+
+    def get_amrit_vachan_section(self):
+        count = AmritVachan.objects.filter(is_published=True).count()
+        if count <= 0:
+            return None
+        return {
+            "key": "amritVachan",
+            "title": "अमृत वचन",
+            "items": [
+                {
+                    "id": "amrit-vachan",
+                    "title": "अमृत वचन",
+                    "slug": "amrit-vachan",
+                    "count": count,
+                    "type": "amrit_vachan",
+                }
+            ],
+        }
 
 
 class LatestContentView(APIView):

@@ -21,6 +21,24 @@ class Category(models.Model):
         return self.name
 
 
+class Subject(models.Model):
+    name = models.CharField(max_length=160)
+    slug = models.SlugField(max_length=180, unique=True, blank=True)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("order", "name")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
 class AudioCategory(models.Model):
     name = models.CharField(max_length=160)
     slug = models.SlugField(max_length=180, unique=True, blank=True)
@@ -158,6 +176,7 @@ class Book(models.Model):
     title = models.CharField(max_length=220)
     slug = models.SlugField(max_length=240, unique=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name="books")
+    subjects = models.ManyToManyField(Subject, blank=True, related_name="books")
     language = models.CharField(max_length=80, default="हिन्दी")
     author = models.CharField(max_length=160, blank=True)
     description = models.TextField(blank=True)

@@ -17,6 +17,7 @@ from .models import (
     ReadingProgress,
     SocialLink,
     SideMenuItem,
+    Subject,
 )
 
 
@@ -24,6 +25,14 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ("id", "name", "slug", "order")
+
+
+class SubjectSerializer(serializers.ModelSerializer):
+    book_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Subject
+        fields = ("id", "name", "slug", "order", "book_count")
 
 
 class AudioCategorySerializer(serializers.ModelSerializer):

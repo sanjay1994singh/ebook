@@ -19,10 +19,14 @@ from .views import (
     ReadingProgressListCreateView,
     SocialLinkListView,
     SideMenuItemListView,
+    SubjectListView,
+    TopCategoryListView,
 )
 
 urlpatterns = [
     path("categories/", CategoryListView.as_view(), name="category_list"),
+    path("subjects/", SubjectListView.as_view(), name="subject_list"),
+    path("top-categories/", TopCategoryListView.as_view(), name="top_category_list"),
     path("magazines/", MagazineListView.as_view(), name="magazine_list"),
     path("magazines/<slug:slug>/issues/", MagazineIssueListView.as_view(), name="magazine_issue_list"),
     path("", BookListView.as_view(), name="book_list"),
