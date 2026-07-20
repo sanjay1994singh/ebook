@@ -437,8 +437,6 @@ class AuthorMenuView(APIView):
             self.get_book_authors(),
             self.get_audio_speakers("ऑडियो", "audio", exclude_special=True),
             self.get_audio_speakers("प्रवचन", "pravachan", category_slug="pravachan"),
-            self.get_video_authors(),
-            self.get_article_authors(),
         ]
         return Response(
             {
@@ -510,32 +508,3 @@ class AuthorMenuView(APIView):
                 }
             )
         return {"key": key, "title": title, "items": items}
-
-    def get_video_authors(self):
-        try:
-            feed = get_channel_videos(force_refresh=False)
-            videos = feed.get("videos") or []
-            shorts = feed.get("shorts") or []
-        except Exception:
-            videos = []
-            shorts = []
-        count = len(videos) + len(shorts)
-        items = []
-        if count:
-            items.append({"id": "nidhivan-ras", "name": "Nidhivan Ras", "count": count, "type": "video"})
-        return {
-            "key": "video",
-            "title": "वीडियो",
-            "items": items,
-        }
-
-    def get_article_authors(self):
-        queryset = AmritVachan.objects.filter(is_published=True)
-        items = []
-        if queryset.exists():
-            items.append({"id": "amrit-vachan", "name": "अमृत वचन", "count": queryset.count(), "type": "amritVachan"})
-        return {
-            "key": "articles",
-            "title": "अनमोल लेख",
-            "items": items,
-        }
