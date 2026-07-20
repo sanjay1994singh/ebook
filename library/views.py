@@ -2,6 +2,10 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from content.models import AmritVachan
+from content.serializers import AmritVachanSerializer
+from youtube_feed.services import get_channel_videos
+
 from .models import (
     AudioCategory,
     AudioSpeaker,
@@ -323,3 +327,196 @@ class SideMenuItemListView(generics.ListAPIView):
 
     def get_queryset(self):
         return SideMenuItem.objects.filter(is_active=True)
+
+
+class LatestContentView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Home ke "Naveenatam" tab ke liye sabhi latest sections ek response me bhejta hai.
+        sections = [
+            self.get_books_section(request),
+            *self.get_magazine_sections(request),
+            self.get_audio_section(request, "ऑडियो", None, "audio"),
+            self.get_audio_section(request, "प्रवचन", "pravachan", "pravachan"),
+            self.get_audio_section(request, "दैनिक सत्संग", "dainik-satsang", "satsang"),
+            self.get_video_section(),
+            self.get_amrit_vachan_section(request),
+        ]
+        return Response({"sections": [section for section in sections if section and section["items"]]})
+
+    def get_books_section(self, request):
+        queryset = (
+            Book.objects.filter(is_published=True, magazine_issue__isnull=True)
+            .exclude(category__slug__in=["patrika", "magazine"])
+            .select_related("category")
+            .order_by("-updated_at", "-id")
+        )
+        return {
+            "key": "books",
+            "title": "ई-पुस्तकें",
+            "total": queryset.count(),
+            "action": "books",
+            "button_label": "पुस्तकें देखें",
+            "items": BookListSerializer(queryset[:8], many=True, context={"request": request}).data,
+        }
+
+    def get_magazine_sections(self, request):
+        sections = []
+        magazines = Magazine.objects.filter(is_published=True).prefetch_related("issues").order_by("order", "title")
+        for magazine in magazines[:4]:
+            issues = (
+                MagazineIssue.objects.filter(magazine=magazine, is_published=True)
+                .select_related("magazine", "book", "book__category")
+                .order_by("-updated_at", "order", "-year", "-issue_number")[:8]
+            )
+            sections.append(
+                {
+                    "key": f"magazine-{magazine.slug}",
+                    "title": magazine.title,
+                    "total": magazine.issues.filter(is_published=True).count(),
+                    "action": "patrika",
+                    "button_label": "पत्रिकाएं देखें",
+                    "items": MagazineIssueSerializer(issues, many=True, context={"request": request}).data,
+                }
+            )
+        return sections
+
+    def get_audio_section(self, request, title, category_slug, action):
+        queryset = AudioTrack.objects.filter(is_published=True).select_related("category", "speaker_ref")
+        if category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+        else:
+            queryset = queryset.exclude(category__slug__in=["pravachan", "dainik-satsang"])
+        queryset = queryset.order_by("-created_at", "-id")
+        return {
+            "key": action,
+            "title": title,
+            "total": queryset.count(),
+            "action": action,
+            "button_label": f"{title} देखें",
+            "items": AudioTrackSerializer(queryset[:8], many=True, context={"request": request}).data,
+        }
+
+    def get_video_section(self):
+        try:
+            feed = get_channel_videos(force_refresh=False)
+            videos = (feed.get("videos") or [])[:6]
+        except Exception:
+            videos = []
+        return {
+            "key": "video",
+            "title": "वीडियो",
+            "total": len(videos),
+            "action": "video",
+            "button_label": "वीडियो देखें",
+            "items": videos,
+        }
+
+    def get_amrit_vachan_section(self, request):
+        queryset = AmritVachan.objects.filter(is_published=True).order_by("-quote_date", "-quote_number", "-id")
+        return {
+            "key": "amritVachan",
+            "title": "अमृत वचन",
+            "total": queryset.count(),
+            "action": "amritVachan",
+            "button_label": "अमृत वचन देखें",
+            "items": AmritVachanSerializer(queryset[:8], many=True, context={"request": request}).data,
+        }
+
+
+class AuthorMenuView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Top "Lekhak" tab ke liye real backend authors/speakers ko group karke bhejta hai.
+        return Response(
+            {
+                "sections": [
+                    self.get_book_authors(),
+                    self.get_audio_speakers("ऑडियो", "audio", exclude_special=True),
+                    self.get_audio_speakers("प्रवचन", "pravachan", category_slug="pravachan"),
+                    self.get_video_authors(),
+                    self.get_article_authors(),
+                ]
+            }
+        )
+
+    def get_book_authors(self):
+        rows = (
+            Book.objects.filter(is_published=True, magazine_issue__isnull=True)
+            .exclude(author="")
+            .exclude(category__slug__in=["patrika", "magazine"])
+            .values("author")
+            .order_by("author")
+            .distinct()
+        )
+        items = []
+        for row in rows:
+            author = row["author"]
+            items.append(
+                {
+                    "id": author,
+                    "name": author,
+                    "count": Book.objects.filter(is_published=True, author=author).count(),
+                    "type": "book",
+                }
+            )
+        return {"key": "books", "title": "ई-पुस्तकें", "items": items}
+
+    def get_audio_speakers(self, title, key, category_slug=None, exclude_special=False):
+        queryset = AudioTrack.objects.filter(is_published=True).select_related("category", "speaker_ref")
+        if category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+        if exclude_special:
+            queryset = queryset.exclude(category__slug__in=["pravachan", "dainik-satsang"])
+
+        speaker_rows = (
+            queryset.exclude(speaker_ref=None)
+            .values("speaker_ref_id", "speaker_ref__name")
+            .distinct()
+            .order_by("speaker_ref__name")
+        )
+        items = []
+        used_names = set()
+        for row in speaker_rows:
+            speaker_name = row["speaker_ref__name"]
+            used_names.add(speaker_name)
+            items.append(
+                {
+                    "id": row["speaker_ref_id"],
+                    "name": speaker_name,
+                    "count": queryset.filter(speaker_ref_id=row["speaker_ref_id"]).count(),
+                    "type": "audio",
+                    "category_slug": category_slug or "",
+                }
+            )
+
+        text_speakers = queryset.exclude(speaker="").values_list("speaker", flat=True).distinct().order_by("speaker")
+        for speaker in text_speakers:
+            if speaker in used_names:
+                continue
+            items.append(
+                {
+                    "id": speaker,
+                    "name": speaker,
+                    "count": queryset.filter(speaker=speaker).count(),
+                    "type": "audio",
+                    "category_slug": category_slug or "",
+                }
+            )
+        return {"key": key, "title": title, "items": items}
+
+    def get_video_authors(self):
+        return {
+            "key": "video",
+            "title": "वीडियो",
+            "items": [{"id": "nidhivan-ras", "name": "Nidhivan Ras", "count": 0, "type": "video"}],
+        }
+
+    def get_article_authors(self):
+        return {
+            "key": "articles",
+            "title": "अनमोल लेख",
+            "items": [{"id": "nikunj-ras", "name": "Nikunj Ras", "count": 0, "type": "articles"}],
+        }
