@@ -6,30 +6,38 @@ from .models import (
     AudioCategory,
     AudioSpeaker,
     AudioTrack,
+    AppRating,
+    AppUserProfile,
     Book,
     BookPage,
     Category,
     Chapter,
+    ContactMessage,
     FavoriteBook,
     Magazine,
     MagazineIssue,
     ReadingProgress,
+    SocialLink,
 )
 from .pagination import StandardResultsSetPagination
 from .serializers import (
     AudioCategorySerializer,
     AudioSpeakerSerializer,
     AudioTrackSerializer,
+    AppRatingSerializer,
+    AppUserProfileSerializer,
     BookDetailSerializer,
     BookListSerializer,
     BookPageSerializer,
     BookPageListSerializer,
     CategorySerializer,
     ChapterSerializer,
+    ContactMessageSerializer,
     FavoriteBookSerializer,
     MagazineIssueSerializer,
     MagazineSerializer,
     ReadingProgressSerializer,
+    SocialLinkSerializer,
 )
 
 
@@ -218,3 +226,90 @@ class ReadingProgressListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class AppUserProfileView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        device_id = request.query_params.get("device_id")
+        if not device_id:
+            return Response({})
+        profile = AppUserProfile.objects.filter(device_id=device_id).first()
+        if not profile:
+            return Response({})
+        return Response(AppUserProfileSerializer(profile).data)
+
+    def post(self, request):
+        device_id = request.data.get("device_id")
+        if not device_id:
+            return Response({"device_id": ["This field is required."]}, status=400)
+        profile, _created = AppUserProfile.objects.get_or_create(device_id=device_id)
+        serializer = AppUserProfileSerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class AppRatingView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        device_id = request.query_params.get("device_id")
+        if not device_id:
+            return Response({})
+        rating = AppRating.objects.filter(device_id=device_id).first()
+        if not rating:
+            return Response({})
+        return Response(AppRatingSerializer(rating).data)
+
+    def post(self, request):
+        device_id = request.data.get("device_id")
+        if not device_id:
+            return Response({"device_id": ["This field is required."]}, status=400)
+        rating, _created = AppRating.objects.get_or_create(device_id=device_id)
+        serializer = AppRatingSerializer(rating, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class ContactMessageView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        device_id = request.query_params.get("device_id")
+        queryset = ContactMessage.objects.all()
+        if device_id:
+            queryset = queryset.filter(device_id=device_id)
+        messages = queryset[:10]
+        latest = messages[0] if messages else None
+        return Response(
+            {
+                "latest": ContactMessageSerializer(latest).data if latest else None,
+                "results": ContactMessageSerializer(messages, many=True).data,
+            }
+        )
+
+    def post(self, request):
+        serializer = ContactMessageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        message = serializer.save()
+        if message.device_id:
+            AppUserProfile.objects.update_or_create(
+                device_id=message.device_id,
+                defaults={
+                    "name": message.name,
+                    "mobile": message.mobile,
+                    "email": message.email,
+                },
+            )
+        return Response(ContactMessageSerializer(message).data, status=201)
+
+
+class SocialLinkListView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = SocialLinkSerializer
+
+    def get_queryset(self):
+        return SocialLink.objects.filter(is_active=True)

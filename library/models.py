@@ -241,3 +241,66 @@ class ReadingProgress(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.book} - {self.progress_percent}%"
+
+
+class AppUserProfile(models.Model):
+    device_id = models.CharField(max_length=120, unique=True)
+    name = models.CharField(max_length=160, blank=True)
+    mobile = models.CharField(max_length=30, blank=True)
+    email = models.EmailField(blank=True)
+    language = models.CharField(max_length=60, default="Hindi")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at",)
+
+    def __str__(self):
+        return self.name or self.mobile or self.device_id
+
+
+class AppRating(models.Model):
+    device_id = models.CharField(max_length=120, unique=True)
+    rating = models.PositiveSmallIntegerField(default=0)
+    title = models.CharField(max_length=180, blank=True)
+    review = models.TextField(blank=True)
+    nickname = models.CharField(max_length=120, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at",)
+
+    def __str__(self):
+        return f"{self.device_id} - {self.rating}"
+
+
+class ContactMessage(models.Model):
+    device_id = models.CharField(max_length=120, blank=True)
+    service_type = models.CharField(max_length=120, default="General Query")
+    name = models.CharField(max_length=160)
+    mobile = models.CharField(max_length=30)
+    email = models.EmailField(blank=True)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.name} - {self.service_type}"
+
+
+class SocialLink(models.Model):
+    name = models.CharField(max_length=80)
+    label = models.CharField(max_length=120)
+    icon = models.CharField(max_length=20, blank=True)
+    url = models.URLField()
+    color = models.CharField(max_length=20, default="#ff7a1a")
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("order", "name")
+
+    def __str__(self):
+        return self.label

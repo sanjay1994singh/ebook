@@ -7,11 +7,15 @@ from .views import (
     CategoryListView,
     ChapterPageListView,
     ChapterListView,
+    AppRatingView,
+    AppUserProfileView,
+    ContactMessageView,
     FavoriteDeleteView,
     FavoriteListCreateView,
     MagazineIssueListView,
     MagazineListView,
     ReadingProgressListCreateView,
+    SocialLinkListView,
 )
 
 urlpatterns = [
@@ -22,6 +26,10 @@ urlpatterns = [
     path("favorites/", FavoriteListCreateView.as_view(), name="favorite_list_create"),
     path("favorites/<int:book_id>/", FavoriteDeleteView.as_view(), name="favorite_delete"),
     path("progress/", ReadingProgressListCreateView.as_view(), name="progress_list_create"),
+    path("app-profile/", AppUserProfileView.as_view(), name="app_profile"),
+    path("app-rating/", AppRatingView.as_view(), name="app_rating"),
+    path("contact-messages/", ContactMessageView.as_view(), name="contact_messages"),
+    path("social-links/", SocialLinkListView.as_view(), name="social_links"),
     path("pages/<int:pk>/", BookPageDetailView.as_view(), name="book_page_detail"),
     path("chapters/<int:chapter_id>/pages/", ChapterPageListView.as_view(), name="chapter_page_list"),
     path("<slug:slug>/", BookDetailView.as_view(), name="book_detail"),

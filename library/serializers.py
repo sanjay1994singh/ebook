@@ -4,14 +4,18 @@ from .models import (
     AudioCategory,
     AudioSpeaker,
     AudioTrack,
+    AppRating,
+    AppUserProfile,
     Book,
     BookPage,
     Category,
     Chapter,
+    ContactMessage,
     FavoriteBook,
     Magazine,
     MagazineIssue,
     ReadingProgress,
+    SocialLink,
 )
 
 
@@ -258,3 +262,35 @@ class ReadingProgressSerializer(serializers.ModelSerializer):
             defaults=validated_data,
         )
         return progress
+
+
+class AppUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppUserProfile
+        fields = ("id", "device_id", "name", "mobile", "email", "language", "updated_at")
+        read_only_fields = ("id", "updated_at")
+
+
+class AppRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppRating
+        fields = ("id", "device_id", "rating", "title", "review", "nickname", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5.")
+        return value
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ("id", "device_id", "service_type", "name", "mobile", "email", "message", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class SocialLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLink
+        fields = ("id", "name", "label", "icon", "url", "color", "order")

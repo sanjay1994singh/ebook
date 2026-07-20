@@ -16,14 +16,18 @@ from .models import (
     AudioCategory,
     AudioSpeaker,
     AudioTrack,
+    AppRating,
+    AppUserProfile,
     Book,
     BookPage,
     Category,
     Chapter,
+    ContactMessage,
     FavoriteBook,
     Magazine,
     MagazineIssue,
     ReadingProgress,
+    SocialLink,
 )
 from .pdf_importer import extract_pdf_to_book
 
@@ -341,3 +345,30 @@ class FavoriteBookAdmin(admin.ModelAdmin):
 @admin.register(ReadingProgress)
 class ReadingProgressAdmin(admin.ModelAdmin):
     list_display = ("user", "book", "chapter", "page", "progress_percent", "updated_at")
+
+
+@admin.register(AppUserProfile)
+class AppUserProfileAdmin(admin.ModelAdmin):
+    list_display = ("device_id", "name", "mobile", "email", "language", "updated_at")
+    search_fields = ("device_id", "name", "mobile", "email")
+
+
+@admin.register(AppRating)
+class AppRatingAdmin(admin.ModelAdmin):
+    list_display = ("device_id", "rating", "nickname", "title", "updated_at")
+    list_filter = ("rating",)
+    search_fields = ("device_id", "nickname", "title", "review")
+
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ("name", "mobile", "service_type", "email", "created_at")
+    list_filter = ("service_type",)
+    search_fields = ("name", "mobile", "email", "message", "device_id")
+
+
+@admin.register(SocialLink)
+class SocialLinkAdmin(admin.ModelAdmin):
+    list_display = ("label", "name", "url", "order", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("label", "name", "url")
