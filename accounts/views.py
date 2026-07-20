@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from rest_framework import generics, permissions, response, views
+from rest_framework import authentication, generics, permissions, response, views
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -44,6 +44,10 @@ class GoogleLoginStartView(views.APIView):
 
 
 class GoogleAuthSuccessView(views.APIView):
+    authentication_classes = [
+        authentication.SessionAuthentication,
+        authentication.BasicAuthentication,
+    ]
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
