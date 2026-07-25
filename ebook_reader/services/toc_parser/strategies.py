@@ -295,10 +295,24 @@ def _clean_devanagari_ocr_title(text: str) -> str:
     words = []
     for token in value.split():
         cleaned_token = token.strip(".,;:!?()[]{}\"'")
+        corrected_token = _common_devanagari_ocr_correction(cleaned_token)
+        if corrected_token:
+            words.append(token.replace(cleaned_token, corrected_token))
+            continue
         if cleaned_token.isascii() and any(char.isalpha() for char in cleaned_token):
             continue
         words.append(token)
     return normalize_text(" ".join(words))
+
+
+def _common_devanagari_ocr_correction(token: str) -> str:
+    corrections = {
+        "ms": "माई",
+        "mai": "माई",
+        "maai": "माई",
+        "wt": "जू",
+    }
+    return corrections.get(token.lower(), "")
 
 
 def _page_is_devanagari_dominant(rows: list[TocRow]) -> bool:

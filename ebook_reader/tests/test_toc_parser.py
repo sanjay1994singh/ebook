@@ -282,6 +282,9 @@ class TocParserTests(TestCase):
                 word("अद्भुत", 180, 190, line_id=3),
                 word("गति", 260, 190, line_id=3),
                 word("उपजत", 310, 190, line_id=3),
+                word("Ms", 180, 235, line_id=4),
+                word("री", 220, 235, line_id=4),
+                word("सहज", 260, 235, line_id=4),
             ],
         )
 
@@ -291,6 +294,7 @@ class TocParserTests(TestCase):
             "ऐसी तौ विचित्र जोरी बनी",
             "दोऊ मिलि",
             "अद्भुत गति उपजत",
+            "माई री सहज",
         ])
 
     def test_one_toc_entry_only(self):
