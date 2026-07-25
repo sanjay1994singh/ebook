@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "content",
     "banners",
     "youtube_feed",
+    "ebook_reader",
 ]
 
 MIDDLEWARE = [
@@ -188,4 +189,33 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+}
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False").lower() == "true"
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+EBOOK_SYSTEM_ENABLED = os.getenv("EBOOK_SYSTEM_ENABLED", os.getenv("EBOOK_READER_ENABLED", "True")).lower() == "true"
+EBOOK_WEB_READER_ENABLED = os.getenv("EBOOK_WEB_READER_ENABLED", os.getenv("EBOOK_READER_ENABLED", "True")).lower() == "true"
+EBOOK_MOBILE_READER_ENABLED = os.getenv("EBOOK_MOBILE_READER_ENABLED", "True").lower() == "true"
+EBOOK_READER_STAFF_ONLY = os.getenv("EBOOK_READER_STAFF_ONLY", "True").lower() == "true"
+EBOOK_PROCESSING_ENABLED = os.getenv("EBOOK_PROCESSING_ENABLED", "True").lower() == "true"
+EBOOK_READER_ENABLED = EBOOK_SYSTEM_ENABLED and EBOOK_WEB_READER_ENABLED
+EBOOK_READER_TOC_SCAN_PAGE_LIMIT = int(os.getenv("EBOOK_READER_TOC_SCAN_PAGE_LIMIT", "40"))
+EBOOK_MAX_PDF_PAGES = int(os.getenv("EBOOK_MAX_PDF_PAGES", "2500"))
+EBOOK_MAX_PDF_SIZE_MB = int(os.getenv("EBOOK_MAX_PDF_SIZE_MB", "500"))
+EBOOK_SIGNED_URL_EXPIRES_SECONDS = int(os.getenv("EBOOK_SIGNED_URL_EXPIRES_SECONDS", "900"))
+EBOOK_OCR_ENGINE = os.getenv("EBOOK_OCR_ENGINE", "tesseract")
+EBOOK_OCR_LANGUAGES = os.getenv("EBOOK_OCR_LANGUAGES", "hin+eng")
+EBOOK_RENDER_DPI = int(os.getenv("EBOOK_RENDER_DPI", "300"))
+EBOOK_OCR_TIMEOUT_SECONDS = int(os.getenv("EBOOK_OCR_TIMEOUT_SECONDS", "60"))
+EBOOK_OCR_PREPROCESSING = {
+    "grayscale": os.getenv("EBOOK_OCR_GRAYSCALE", "True").lower() == "true",
+    "threshold": os.getenv("EBOOK_OCR_THRESHOLD", "True").lower() == "true",
+    "threshold_value": int(os.getenv("EBOOK_OCR_THRESHOLD_VALUE", "180")),
+    "deskew": os.getenv("EBOOK_OCR_DESKEW", "False").lower() == "true",
+    "border_removal": os.getenv("EBOOK_OCR_BORDER_REMOVAL", "False").lower() == "true",
 }

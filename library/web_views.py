@@ -2,8 +2,11 @@ from django.db.models import Prefetch, Q
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from banners.models import Banner
+from ebook_reader.models import EbookDocument
+from ebook_reader.views import user_can_preview_reader
 from .models import AudioTrack, Book, BookPage, Category, Chapter, Magazine, MagazineIssue
 
 
@@ -224,6 +227,10 @@ def web_divine_quotes(request):
 def web_book_detail(request, slug):
     """Ek book ka detail page aur vishay suchi dikhata hai."""
     book = get_object_or_404(Book.objects.select_related("category"), slug=slug, is_published=True)
+    ebook_document = EbookDocument.objects.filter(book=book).first()
+    new_reader_preview_url = None
+    if ebook_document and user_can_preview_reader(request, ebook_document):
+        new_reader_preview_url = reverse("ebook_reader:web_reader", args=[ebook_document.id])
     chapter_pages = BookPage.objects.only("id", "chapter_id", "title", "page_number").order_by("page_number", "id")
     chapters = Chapter.objects.filter(book=book).prefetch_related(Prefetch("pages", queryset=chapter_pages))
     first_page = (
@@ -238,6 +245,7 @@ def web_book_detail(request, slug):
             "book": book,
             "chapters": chapters,
             "first_page": first_page,
+            "new_reader_preview_url": new_reader_preview_url,
         },
     )
 

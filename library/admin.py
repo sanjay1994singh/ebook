@@ -12,6 +12,7 @@ from django.utils.html import format_html
 from django.utils.text import slugify
 
 from .forms import AudioTrackBulkUploadForm
+from ebook_reader.services.onboarding import onboard_selected_books
 from .models import (
     AudioCategory,
     AudioSpeaker,
@@ -314,7 +315,7 @@ class BookAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("subjects",)
     inlines = [ChapterInline]
-    actions = ["extract_selected_pdfs"]
+    actions = ["extract_selected_pdfs", "create_ebook_documents_for_selected_books"]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -332,6 +333,21 @@ class BookAdmin(admin.ModelAdmin):
             total_pages += extract_pdf_to_book(book)
             total_books += 1
         self.message_user(request, f"Imported {total_pages} pages from {total_books} books.")
+
+    @admin.action(description="Create ebook documents for selected books")
+    def create_ebook_documents_for_selected_books(self, request, queryset):
+        summary = onboard_selected_books(queryset)
+        self.message_user(
+            request,
+            (
+                "Ebook onboarding complete. "
+                f"examined={summary.examined}, eligible={summary.eligible}, "
+                f"created={summary.created}, already_existed={summary.already_existed}, "
+                f"missing_pdf={summary.missing_pdf}, invalid_pdf_reference={summary.invalid_pdf_reference}, "
+                f"failed={summary.failed}."
+            ),
+            messages.SUCCESS if not summary.failed else messages.WARNING,
+        )
 
 
 @admin.register(Chapter)

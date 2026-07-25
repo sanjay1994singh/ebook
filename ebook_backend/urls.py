@@ -6,6 +6,7 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("auth/", include("social_django.urls", namespace="social")),
+    path("ebooks/", include("ebook_reader.urls")),
     path("", include("library.web_urls")),
     path("api/auth/", include("accounts.urls")),
     path("api/audio/", include("library.audio_urls")),
@@ -13,6 +14,7 @@ urlpatterns = [
     path("api/books/", include("library.urls")),
     path("api/content/", include("content.urls")),
     path("api/youtube/", include("youtube_feed.urls")),
+    path("api/v1/ebooks/", include("ebook_reader.api.v1.urls")),
 ]
 
 if settings.DEBUG:
