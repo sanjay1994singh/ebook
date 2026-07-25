@@ -25,7 +25,94 @@ class EmbeddedTextStrategy:
     def parse_page(self, page: TocPageInput, rows: list[TocRow]) -> tuple[list[TocCandidate], list[TocRow]]:
         if not page.embedded_text or looks_like_garbled_text(page.embedded_text):
             return [], rows
+        block_candidates, block_unclassified = EmbeddedColumnBlockStrategy().parse_page(page, rows)
+        if block_candidates:
+            return block_candidates, block_unclassified
         return LinePatternStrategy(strategy_name=self.name).parse_page(page, rows)
+
+
+class EmbeddedColumnBlockStrategy:
+    name = "embedded_column_block"
+
+    def parse_page(self, page: TocPageInput, rows: list[TocRow]) -> tuple[list[TocCandidate], list[TocRow]]:
+        serial_rows: list[TocRow] = []
+        printed_page_rows: list[TocRow] = []
+        title_rows: list[TocRow] = []
+        unclassified: list[TocRow] = []
+
+        for row in rows:
+            text = normalize_text(row.text)
+            if not text or _looks_like_embedded_header_or_footer(text):
+                unclassified.append(row)
+                continue
+            if _is_physical_page_marker(text, page.page_number):
+                unclassified.append(row)
+                continue
+            if _serial_number_line(text) is not None:
+                serial_rows.append(row)
+                continue
+            if _standalone_number_line(text) is not None:
+                printed_page_rows.append(row)
+                continue
+            title = _clean_title(text)
+            if _is_meaningful_title(title):
+                title_rows.append(row)
+            else:
+                unclassified.append(row)
+
+        entry_count = min(len(serial_rows), len(printed_page_rows), len(title_rows))
+        if entry_count < 2:
+            return [], rows
+
+        candidates = []
+        for index in range(entry_count):
+            serial_row = serial_rows[index]
+            title_row = title_rows[index]
+            page_row = printed_page_rows[index]
+            order = _serial_number_line(serial_row.text)
+            page_number = _standalone_number_line(page_row.text)
+            title = _clean_title(title_row.text)
+            confidence, reasons = score_candidate(
+                row=title_row,
+                order=order,
+                title=title,
+                printed_page_number=page_number,
+                strategy_name=self.name,
+                layout_consistent=True,
+            )
+            candidates.append(
+                TocCandidate(
+                    order=order,
+                    title=title,
+                    printed_page_number=page_number,
+                    proposed_pdf_page=None,
+                    confidence=confidence,
+                    source_toc_page=title_row.source_toc_page,
+                    source_line=title_row.source_line,
+                    source_box=title_row.source_box,
+                    raw_source_text="\n".join(
+                        [
+                            serial_row.raw_source_text or serial_row.text,
+                            title_row.raw_source_text or title_row.text,
+                            page_row.raw_source_text or page_row.text,
+                        ]
+                    ),
+                    warnings=list(title_row.warnings),
+                    parser_strategy=self.name,
+                    confidence_reasons=reasons
+                    + ["Serial, title and printed-page text blocks were paired by order."],
+                )
+            )
+
+        leftovers = (
+            serial_rows[entry_count:]
+            + printed_page_rows[entry_count:]
+            + title_rows[entry_count:]
+            + unclassified
+        )
+        for row in leftovers:
+            row.warnings.append("Embedded text block parser could not safely pair this row.")
+        return candidates, leftovers
 
 
 class ThreeColumnAnchorStrategy:
@@ -116,6 +203,49 @@ def choose_strategy(page: TocPageInput, rows: list[TocRow]) -> ParserStrategy:
     return LinePatternStrategy()
 
 
+def _is_meaningful_title(text: str) -> bool:
+    value = normalize_text(text).strip()
+    if not value:
+        return False
+    if parse_confident_integer(value, structural_hint=True) is not None:
+        return False
+    return any(char.isalpha() for char in value)
+
+
+def _standalone_number_line(text: str) -> int | None:
+    value = normalize_text(text).strip()
+    if value and all(char.isdigit() for char in value):
+        return parse_confident_integer(value, structural_hint=True)
+    return None
+
+
+def _serial_number_line(text: str) -> int | None:
+    value = normalize_text(text).strip()
+    number_text = value.rstrip("-.) :")
+    if number_text != value and number_text and all(char.isdigit() for char in number_text):
+        return parse_confident_integer(number_text, structural_hint=True)
+    return None
+
+
+def _is_physical_page_marker(text: str, page_number: int) -> bool:
+    return _standalone_number_line(text) == page_number
+
+
+def _looks_like_embedded_header_or_footer(text: str) -> bool:
+    value = normalize_text(text).lower()
+    header_tokens = [
+        "contents",
+        "table of contents",
+        "fo'k",
+        "lwph",
+        "fooj.k",
+        "dz0",
+        "la0",
+        "i`0",
+    ]
+    return any(token in value for token in header_tokens)
+
+
 def _candidate_from_columns(
     row: TocRow,
     profile: LayoutProfile,
@@ -160,7 +290,7 @@ def _candidate_from_columns(
         without_page = _remove_trailing_number(row.text)
         title = normalize_text(without_page)
     title = _clean_title(title)
-    if not title:
+    if not _is_meaningful_title(title):
         return None
 
     confidence, reasons = score_candidate(
@@ -208,7 +338,7 @@ def _candidate_from_line(row: TocRow, strategy_name: str) -> TocCandidate | None
         order = None
         title = _clean_title(_remove_trailing_number(text))
 
-    if not title:
+    if not _is_meaningful_title(title):
         return None
     confidence, reasons = score_candidate(
         row=row,

@@ -109,6 +109,31 @@ class TocParserTests(TestCase):
         self.assertEqual([item.title for item in result.valid_candidates], ["First Chapter", "Second Chapter"])
         self.assertEqual(result.page_level_diagnostics[0].rows_filtered, 1)
 
+    def test_embedded_text_column_blocks_are_paired(self):
+        page = TocPageInput(
+            page_number=9,
+            embedded_text=(
+                "9\n"
+                "1-\n"
+                "2-\n"
+                "26\n"
+                "28\n"
+                "fo’k; lwph %-\n"
+                "dz0 la0 fooj.k i`0 la0\n"
+                "ekbZ jh lgt tksjh izxV Hk;h tq]\n"
+                "#fp ds Ádkl ijLij [ksyu ykxs\n"
+                "vkHkkl mYFkk Vhdk dsfyeky th dh"
+            ),
+        )
+
+        result = parse_toc(parser_input([page], start=9, end=9, total=218))
+
+        self.assertEqual(result.total_detected, 2)
+        self.assertEqual(result.valid_candidates[0].order, 1)
+        self.assertEqual(result.valid_candidates[0].title, "ekbZ jh lgt tksjh izxV Hk;h tq]")
+        self.assertEqual(result.valid_candidates[0].printed_page_number, 26)
+        self.assertEqual(result.valid_candidates[0].parser_strategy, "embedded_column_block")
+
     def test_mixed_hindi_english_toc(self):
         page = three_column_page(3, [(1, "Bhakti योग", 7), (2, "Prem Rasa", 15)])
 
