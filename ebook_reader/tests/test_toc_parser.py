@@ -273,10 +273,12 @@ class TocParserTests(TestCase):
                 word("विचित्र", 290, 100, line_id=1),
                 word("जोरी", 380, 100, line_id=1),
                 word("बनी", 450, 100, line_id=1),
-                word("Sea", 180, 145, line_id=2),
-                word("Bad", 230, 145, line_id=2),
-                word("Saat", 280, 145, line_id=2),
-                word("Para", 340, 145, line_id=2),
+                word("Seq", 180, 145, line_id=2),
+                word("BI", 230, 145, line_id=2),
+                word("Gem", 280, 145, line_id=2),
+                word("faethe", 340, 145, line_id=2),
+                word("दोऊ", 420, 145, line_id=2),
+                word("मिलि", 470, 145, line_id=2),
                 word("अद्भुत", 180, 190, line_id=3),
                 word("गति", 260, 190, line_id=3),
                 word("उपजत", 310, 190, line_id=3),
@@ -287,6 +289,7 @@ class TocParserTests(TestCase):
 
         self.assertEqual([item.title for item in result.valid_candidates], [
             "ऐसी तौ विचित्र जोरी बनी",
+            "दोऊ मिलि",
             "अद्भुत गति उपजत",
         ])
 

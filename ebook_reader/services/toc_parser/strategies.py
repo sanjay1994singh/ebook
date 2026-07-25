@@ -197,6 +197,8 @@ class TitleOnlyOcrStrategy:
             for raw_line in raw_lines:
                 source_line += 1
                 title = _clean_title(raw_line)
+                if page_is_devanagari_dominant:
+                    title = _clean_devanagari_ocr_title(title)
                 if not _is_reviewable_title_only_line(
                     title,
                     page_is_devanagari_dominant=page_is_devanagari_dominant,
@@ -282,6 +284,21 @@ def _is_reviewable_title_only_line(text: str, *, page_is_devanagari_dominant: bo
     if page_is_devanagari_dominant and devanagari_letters == 0 and ascii_letters >= 6:
         return False
     return True
+
+
+def _clean_devanagari_ocr_title(text: str) -> str:
+    value = normalize_text(text)
+    if not value:
+        return ""
+    if not any("\u0900" <= char <= "\u097f" for char in value):
+        return value
+    words = []
+    for token in value.split():
+        cleaned_token = token.strip(".,;:!?()[]{}\"'")
+        if cleaned_token.isascii() and any(char.isalpha() for char in cleaned_token):
+            continue
+        words.append(token)
+    return normalize_text(" ".join(words))
 
 
 def _page_is_devanagari_dominant(rows: list[TocRow]) -> bool:
