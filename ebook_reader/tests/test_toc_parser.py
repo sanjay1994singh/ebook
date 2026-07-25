@@ -285,6 +285,10 @@ class TocParserTests(TestCase):
                 word("Ms", 180, 235, line_id=4),
                 word("री", 220, 235, line_id=4),
                 word("सहज", 260, 235, line_id=4),
+                word("श्रीस्वामी", 180, 280, line_id=5),
+                word("महाराज", 280, 280, line_id=5),
+                word("जी", 350, 280, line_id=5),
+                word("द्वारा", 390, 280, line_id=5),
             ],
         )
 

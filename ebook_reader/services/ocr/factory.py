@@ -11,5 +11,6 @@ def get_ocr_engine(engine_name=None):
             languages=settings.EBOOK_OCR_LANGUAGES,
             timeout=settings.EBOOK_OCR_TIMEOUT_SECONDS,
             preprocessing=settings.EBOOK_OCR_PREPROCESSING,
+            config=getattr(settings, "EBOOK_OCR_TESSERACT_CONFIG", ""),
         )
     raise OcrConfigurationError(f"Unknown OCR engine: {selected_engine}")

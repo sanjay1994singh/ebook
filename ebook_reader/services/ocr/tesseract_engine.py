@@ -19,10 +19,12 @@ class TesseractOcrEngine:
         languages="hin+eng",
         timeout=60,
         preprocessing=None,
+        config="",
         pytesseract_module=None,
     ):
         self.languages = languages
         self.timeout = timeout
+        self.config = config
         self.preprocessing = {
             "grayscale": True,
             "threshold": True,
@@ -40,6 +42,7 @@ class TesseractOcrEngine:
             data = self.pytesseract.image_to_data(
                 processed_image,
                 lang=self.languages,
+                config=self.config,
                 output_type=self.pytesseract.Output.DICT,
                 timeout=self.timeout,
             )

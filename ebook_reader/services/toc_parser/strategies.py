@@ -269,6 +269,8 @@ def _is_meaningful_title(text: str) -> bool:
 
 def _is_reviewable_title_only_line(text: str, *, page_is_devanagari_dominant: bool = False) -> bool:
     value = normalize_text(text).strip()
+    if _is_devanagari_footer_or_note(value):
+        return False
     if not _is_meaningful_title(value):
         return False
     if len(value) < 4:
@@ -284,6 +286,22 @@ def _is_reviewable_title_only_line(text: str, *, page_is_devanagari_dominant: bo
     if page_is_devanagari_dominant and devanagari_letters == 0 and ascii_letters >= 6:
         return False
     return True
+
+
+def _is_devanagari_footer_or_note(text: str) -> bool:
+    value = normalize_text(text)
+    footer_phrases = (
+        "द्वारा",
+        "केलिमाल जी की",
+        "वस्तु दर्शनी",
+        "भाव वर्णन टीका",
+        "महाराज जी द्वारा",
+    )
+    if any(phrase in value for phrase in footer_phrases):
+        return True
+    if value.startswith("(") and "से" in value and "तक" in value:
+        return True
+    return False
 
 
 def _clean_devanagari_ocr_title(text: str) -> str:

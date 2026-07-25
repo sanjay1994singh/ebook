@@ -22,7 +22,7 @@ class FakePytesseract:
     class Output:
         DICT = "dict"
 
-    def image_to_data(self, image, lang=None, output_type=None, timeout=None):
+    def image_to_data(self, image, lang=None, config=None, output_type=None, timeout=None):
         return {
             "text": ["", "विषय", "सूची", "१२३"],
             "conf": ["-1", "92.5", "88", "80"],
