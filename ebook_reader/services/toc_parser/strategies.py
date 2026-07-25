@@ -183,6 +183,55 @@ class LinePatternStrategy:
         return candidates, unclassified
 
 
+class TitleOnlyOcrStrategy:
+    name = "title_only_ocr"
+
+    def parse_page(self, page: TocPageInput, rows: list[TocRow]) -> tuple[list[TocCandidate], list[TocRow]]:
+        candidates = []
+        unclassified = []
+        source_line = 0
+        for row in rows:
+            raw_lines = (row.raw_source_text or row.text).splitlines() or [row.text]
+            row_created = False
+            for raw_line in raw_lines:
+                source_line += 1
+                title = _clean_title(raw_line)
+                if not _is_reviewable_title_only_line(title):
+                    continue
+                confidence, reasons = score_candidate(
+                    row=row,
+                    order=None,
+                    title=title,
+                    printed_page_number=None,
+                    strategy_name=self.name,
+                    layout_consistent=False,
+                )
+                warnings = list(row.warnings)
+                warnings.append("Serial and printed page number were not available; title was kept for admin review.")
+                candidates.append(
+                    TocCandidate(
+                        order=None,
+                        title=title,
+                        printed_page_number=None,
+                        proposed_pdf_page=None,
+                        confidence=confidence,
+                        source_toc_page=row.source_toc_page,
+                        source_line=row.source_line or source_line,
+                        source_box=row.source_box,
+                        raw_source_text=raw_line,
+                        warnings=warnings,
+                        parser_strategy=self.name,
+                        confidence_reasons=reasons
+                        + ["OCR produced reviewable title text without reliable numeric anchors."],
+                    )
+                )
+                row_created = True
+            if not row_created:
+                row.warnings.append("OCR row did not contain a reviewable title.")
+                unclassified.append(row)
+        return candidates, unclassified
+
+
 class ReviewOnlyFallbackStrategy:
     name = "review_only_fallback"
 
@@ -210,6 +259,21 @@ def _is_meaningful_title(text: str) -> bool:
     if parse_confident_integer(value, structural_hint=True) is not None:
         return False
     return any(char.isalpha() for char in value)
+
+
+def _is_reviewable_title_only_line(text: str) -> bool:
+    value = normalize_text(text).strip()
+    if not _is_meaningful_title(value):
+        return False
+    if len(value) < 4:
+        return False
+    letters = sum(char.isalpha() for char in value)
+    digits = sum(char.isdigit() for char in normalize_number_text(value))
+    if digits and digits >= letters:
+        return False
+    if value.startswith("(") and digits:
+        return False
+    return True
 
 
 def _standalone_number_line(text: str) -> int | None:

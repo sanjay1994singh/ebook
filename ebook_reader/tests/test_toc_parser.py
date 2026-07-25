@@ -243,6 +243,26 @@ class TocParserTests(TestCase):
         self.assertTrue(result.requires_review)
         self.assertEqual(len(result.unclassified_rows), 1)
 
+    def test_ocr_title_only_rows_are_kept_as_reviewable_candidates(self):
+        page = TocPageInput(
+            page_number=9,
+            width=1000,
+            ocr_words=[
+                word("First", 180, 100, line_id=1),
+                word("lesson", 250, 100, line_id=1),
+                word("Second", 180, 145, line_id=2),
+                word("lesson", 260, 145, line_id=2),
+            ],
+        )
+
+        result = parse_toc(parser_input([page], start=9, end=9))
+
+        self.assertEqual(result.total_detected, 2)
+        self.assertEqual([item.title for item in result.valid_candidates], ["First lesson", "Second lesson"])
+        self.assertTrue(all(item.order is None for item in result.valid_candidates))
+        self.assertTrue(all(item.printed_page_number is None for item in result.valid_candidates))
+        self.assertEqual(result.valid_candidates[0].parser_strategy, "title_only_ocr")
+
     def test_one_toc_entry_only(self):
         page = TocPageInput(page_number=2, embedded_text="1 Only lesson 12")
 

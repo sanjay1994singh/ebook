@@ -2,7 +2,7 @@ from .exceptions import EffectiveTocRangeError
 from .models import PageDiagnostics, TocParserInput, TocParsingResult
 from .normalisation import looks_like_garbled_text
 from .row_grouper import filter_repeated_headers_and_footers, rows_from_page
-from .strategies import ReviewOnlyFallbackStrategy, choose_strategy
+from .strategies import ReviewOnlyFallbackStrategy, TitleOnlyOcrStrategy, choose_strategy
 from .validators import validate_candidates
 
 
@@ -54,11 +54,19 @@ def parse_toc(parser_input: TocParserInput) -> TocParsingResult:
         strategy = choose_strategy(page, rows)
         page_candidates, page_unclassified = strategy.parse_page(page, rows)
         if not page_candidates and rows:
-            fallback = ReviewOnlyFallbackStrategy()
+            fallback = TitleOnlyOcrStrategy() if page.ocr_words else ReviewOnlyFallbackStrategy()
             page_candidates, page_unclassified = fallback.parse_page(page, rows)
+            if not page_candidates and page_unclassified:
+                fallback = ReviewOnlyFallbackStrategy()
+                page_candidates, page_unclassified = fallback.parse_page(page, rows)
             strategy_name = fallback.name
         else:
             strategy_name = strategy.name
+
+        if not page_candidates and rows and strategy_name != ReviewOnlyFallbackStrategy.name:
+            fallback = ReviewOnlyFallbackStrategy()
+            page_candidates, page_unclassified = fallback.parse_page(page, rows)
+            strategy_name = fallback.name
 
         candidates.extend(page_candidates)
         unclassified.extend(page_unclassified)
