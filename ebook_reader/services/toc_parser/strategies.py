@@ -190,13 +190,17 @@ class TitleOnlyOcrStrategy:
         candidates = []
         unclassified = []
         source_line = 0
+        page_is_devanagari_dominant = _page_is_devanagari_dominant(rows)
         for row in rows:
             raw_lines = (row.raw_source_text or row.text).splitlines() or [row.text]
             row_created = False
             for raw_line in raw_lines:
                 source_line += 1
                 title = _clean_title(raw_line)
-                if not _is_reviewable_title_only_line(title):
+                if not _is_reviewable_title_only_line(
+                    title,
+                    page_is_devanagari_dominant=page_is_devanagari_dominant,
+                ):
                     continue
                 confidence, reasons = score_candidate(
                     row=row,
@@ -261,7 +265,7 @@ def _is_meaningful_title(text: str) -> bool:
     return any(char.isalpha() for char in value)
 
 
-def _is_reviewable_title_only_line(text: str) -> bool:
+def _is_reviewable_title_only_line(text: str, *, page_is_devanagari_dominant: bool = False) -> bool:
     value = normalize_text(text).strip()
     if not _is_meaningful_title(value):
         return False
@@ -269,11 +273,22 @@ def _is_reviewable_title_only_line(text: str) -> bool:
         return False
     letters = sum(char.isalpha() for char in value)
     digits = sum(char.isdigit() for char in normalize_number_text(value))
+    devanagari_letters = sum("\u0900" <= char <= "\u097f" for char in value)
+    ascii_letters = sum(char.isascii() and char.isalpha() for char in value)
     if digits and digits >= letters:
         return False
     if value.startswith("(") and digits:
         return False
+    if page_is_devanagari_dominant and devanagari_letters == 0 and ascii_letters >= 6:
+        return False
     return True
+
+
+def _page_is_devanagari_dominant(rows: list[TocRow]) -> bool:
+    text = "\n".join(row.raw_source_text or row.text for row in rows)
+    devanagari_letters = sum("\u0900" <= char <= "\u097f" for char in text)
+    ascii_letters = sum(char.isascii() and char.isalpha() for char in text)
+    return devanagari_letters >= 20 and devanagari_letters >= ascii_letters
 
 
 def _standalone_number_line(text: str) -> int | None:

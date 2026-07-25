@@ -263,6 +263,33 @@ class TocParserTests(TestCase):
         self.assertTrue(all(item.printed_page_number is None for item in result.valid_candidates))
         self.assertEqual(result.valid_candidates[0].parser_strategy, "title_only_ocr")
 
+    def test_hindi_ocr_title_only_filters_latin_hallucination_lines(self):
+        page = TocPageInput(
+            page_number=9,
+            width=1000,
+            ocr_words=[
+                word("ऐसी", 180, 100, line_id=1),
+                word("तौ", 240, 100, line_id=1),
+                word("विचित्र", 290, 100, line_id=1),
+                word("जोरी", 380, 100, line_id=1),
+                word("बनी", 450, 100, line_id=1),
+                word("Sea", 180, 145, line_id=2),
+                word("Bad", 230, 145, line_id=2),
+                word("Saat", 280, 145, line_id=2),
+                word("Para", 340, 145, line_id=2),
+                word("अद्भुत", 180, 190, line_id=3),
+                word("गति", 260, 190, line_id=3),
+                word("उपजत", 310, 190, line_id=3),
+            ],
+        )
+
+        result = parse_toc(parser_input([page], start=9, end=9))
+
+        self.assertEqual([item.title for item in result.valid_candidates], [
+            "ऐसी तौ विचित्र जोरी बनी",
+            "अद्भुत गति उपजत",
+        ])
+
     def test_one_toc_entry_only(self):
         page = TocPageInput(page_number=2, embedded_text="1 Only lesson 12")
 
