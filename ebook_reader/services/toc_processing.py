@@ -1,6 +1,7 @@
 import logging
 from dataclasses import asdict, dataclass
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from pypdf.errors import PyPdfError
@@ -13,14 +14,18 @@ from ebook_reader.models import (
 )
 from ebook_reader.services.page_mapping import map_toc_candidates
 from ebook_reader.services.feature_flags import processing_globally_enabled
+from ebook_reader.services.ocr import get_ocr_engine
+from ebook_reader.services.ocr.exceptions import OcrError
 from ebook_reader.services.pdf_metadata import EbookPdfError, open_pdf_reader
+from ebook_reader.services.pdf_rendering import render_pdf_page_to_image
 from ebook_reader.services.toc_parser import parse_toc, resolve_effective_toc_range
 from ebook_reader.services.toc_parser.exceptions import EffectiveTocRangeError
-from ebook_reader.services.toc_parser.models import TocPageInput, TocParserInput
+from ebook_reader.services.toc_parser.models import TocOcrWord, TocPageInput, TocParserInput
+from ebook_reader.services.toc_parser.normalisation import looks_like_garbled_text
 
 
 PARSER_VERSION = "toc_parser.v1"
-EXTRACTION_ENGINE = "embedded_text"
+EXTRACTION_ENGINE = "embedded_text_or_ocr"
 logger = logging.getLogger(__name__)
 
 
@@ -217,14 +222,127 @@ def _extract_toc_pages(ebook_document, start_page, end_page):
 
     pages = []
     warnings = []
+    ocr_engine = None
     for page_number in range(start_page, end_page + 1):
         try:
             text = reader.pages[page_number - 1].extract_text() or ""
         except PyPdfError as error:
             text = ""
             warnings.append(f"PDF page {page_number} embedded text extraction failed: {error}")
+        if _should_use_ocr_for_toc_text(text):
+            if ocr_engine is None:
+                ocr_engine = get_ocr_engine()
+            page_input, page_warnings = _extract_toc_page_with_ocr(
+                ebook_document,
+                page_number,
+                embedded_text=text,
+                ocr_engine=ocr_engine,
+            )
+            warnings.extend(page_warnings)
+            pages.append(page_input)
+            continue
         pages.append(TocPageInput(page_number=page_number, embedded_text=text))
     return pages, warnings
+
+
+def _extract_toc_page_with_ocr(ebook_document, page_number, *, embedded_text, ocr_engine):
+    page_warnings = [
+        f"PDF page {page_number} embedded TOC text looked legacy/garbled; OCR was used."
+    ]
+    try:
+        image = render_pdf_page_to_image(
+            ebook_document,
+            page_number,
+            dpi=settings.EBOOK_RENDER_DPI,
+        )
+        result = ocr_engine.extract(image)
+    except (EbookPdfError, OcrError) as error:
+        page_warnings.append(
+            f"PDF page {page_number} OCR fallback failed; embedded text was kept: {_safe_error(error)}"
+        )
+        return TocPageInput(
+            page_number=page_number,
+            embedded_text=embedded_text,
+            warnings=page_warnings,
+        ), page_warnings
+
+    words = [
+        TocOcrWord(
+            text=word.text,
+            confidence=word.confidence,
+            left=word.left,
+            top=word.top,
+            width=word.width,
+            height=word.height,
+            block_id=word.block_num,
+            paragraph_id=word.par_num,
+            line_id=word.line_num,
+        )
+        for word in result.words
+    ]
+    if not words:
+        page_warnings.append(
+            f"PDF page {page_number} OCR produced no words; embedded text was kept."
+        )
+        return TocPageInput(
+            page_number=page_number,
+            embedded_text=embedded_text,
+            warnings=page_warnings,
+        ), page_warnings
+
+    page_warnings.extend(result.warnings)
+    return TocPageInput(
+        page_number=page_number,
+        embedded_text="",
+        ocr_words=words,
+        width=getattr(image, "width", None),
+        height=getattr(image, "height", None),
+        ocr_engine_metadata={
+            "engine_name": result.engine_name,
+            "languages": result.languages,
+            "word_count": len(words),
+        },
+        warnings=page_warnings,
+    ), page_warnings
+
+
+def _should_use_ocr_for_toc_text(text):
+    value = text or ""
+    if not value.strip():
+        return True
+    if looks_like_garbled_text(value):
+        return True
+
+    normalized = value.lower()
+    legacy_tokens = (
+        "fo'k",
+        "fo’k",
+        "lwph",
+        "fooj",
+        "dz0",
+        "i`0",
+        "la0",
+        "jkejfld",
+        "izdk'k",
+        "izxv",
+        "vk",
+        "gS",
+    )
+    if any(token.lower() in normalized for token in legacy_tokens):
+        return True
+
+    devanagari_count = sum("\u0900" <= char <= "\u097f" for char in value)
+    ascii_alpha_count = sum(char.isascii() and char.isalpha() for char in value)
+    legacy_punctuation_count = sum(value.count(char) for char in ("`", ";", "/", "’", "'", "Á"))
+    english_toc_markers = ("contents", "table of contents", "chapter", "page")
+    if (
+        devanagari_count == 0
+        and ascii_alpha_count > 80
+        and legacy_punctuation_count >= 8
+        and not any(marker in normalized for marker in english_toc_markers)
+    ):
+        return True
+    return False
 
 
 def _persist_processing_result(

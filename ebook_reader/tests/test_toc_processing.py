@@ -14,8 +14,13 @@ from ebook_reader.models import (
     EbookProcessingRun,
     EbookTocCandidate,
 )
+from ebook_reader.services.ocr.base import OcrResult, OcrWord
 from ebook_reader.services.toc_parser.models import TocPageInput
-from ebook_reader.services.toc_processing import process_ebook_toc
+from ebook_reader.services.toc_processing import (
+    _extract_toc_pages,
+    _should_use_ocr_for_toc_text,
+    process_ebook_toc,
+)
 from library.models import Book, Category
 
 
@@ -299,6 +304,44 @@ class TocProcessingTests(TestCase):
         self.assertEqual(data["created_lessons"], 1)
         self.assertIn("diagnostics", data)
 
+    def test_legacy_embedded_toc_text_uses_ocr_words(self):
+        document = self.create_document()
+        legacy_text = "fo'k; lwph\n1-\n26\nekbZ jh lgt tksjh izxV Hk;h tq]"
+        ocr_result = OcrResult(
+            full_text="१ मां झी सजधज",
+            normalized_text="1 मां झी सजधज",
+            engine_name="tesseract",
+            languages="hin+eng",
+            words=[
+                OcrWord("१", "1", 91, 10, 20, 8, 10, line_num=1),
+                OcrWord("मां", "मां", 90, 30, 20, 20, 10, line_num=1),
+                OcrWord("झी", "झी", 90, 55, 20, 18, 10, line_num=1),
+                OcrWord("२६", "26", 95, 250, 20, 16, 10, line_num=1),
+            ],
+        )
+
+        with patch(
+            "ebook_reader.services.toc_processing.open_pdf_reader",
+            return_value=(None, FakePdfReader([legacy_text])),
+        ), patch(
+            "ebook_reader.services.toc_processing.render_pdf_page_to_image",
+            return_value=FakeImage(),
+        ), patch(
+            "ebook_reader.services.toc_processing.get_ocr_engine",
+            return_value=FakeOcrEngine(ocr_result),
+        ):
+            pages, warnings = _extract_toc_pages(document, 1, 1)
+
+        self.assertEqual(pages[0].embedded_text, "")
+        self.assertEqual(len(pages[0].ocr_words), 4)
+        self.assertEqual(pages[0].ocr_engine_metadata["engine_name"], "tesseract")
+        self.assertTrue(any("OCR was used" in warning for warning in warnings))
+
+    def test_clean_embedded_toc_text_does_not_use_ocr(self):
+        self.assertFalse(_should_use_ocr_for_toc_text("1 First lesson 10\n2 Second lesson 20"))
+        self.assertFalse(_should_use_ocr_for_toc_text("१ पहला पाठ १०\n२ दूसरा पाठ २०"))
+        self.assertTrue(_should_use_ocr_for_toc_text("fo'k; lwph\n1-\n26\nekbZ jh lgt tksjh izxV Hk;h tq]"))
+
 
 class TextOutput:
     def __init__(self, output):
@@ -307,3 +350,29 @@ class TextOutput:
     def write(self, value):
         self.output.write(str(value).encode())
         self.output.write(b"\n")
+
+
+class FakePdfPage:
+    def __init__(self, text):
+        self.text = text
+
+    def extract_text(self):
+        return self.text
+
+
+class FakePdfReader:
+    def __init__(self, page_texts):
+        self.pages = [FakePdfPage(text) for text in page_texts]
+
+
+class FakeImage:
+    width = 300
+    height = 400
+
+
+class FakeOcrEngine:
+    def __init__(self, result):
+        self.result = result
+
+    def extract(self, image):
+        return self.result
