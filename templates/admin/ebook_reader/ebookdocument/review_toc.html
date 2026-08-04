@@ -1,0 +1,214 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .toc-review-wrap { max-width: 100%; }
+  .toc-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin: 12px 0 18px; }
+  .toc-summary-card { border: 1px solid var(--border-color, #ddd); border-radius: 6px; padding: 10px; background: var(--body-bg, #fff); }
+  .toc-summary-card strong { display: block; font-size: 12px; color: var(--body-quiet-color, #666); }
+  .toc-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+  .toc-table-wrap { overflow-x: auto; border: 1px solid var(--border-color, #ddd); }
+  table.toc-review-table { min-width: 1500px; width: 100%; border-collapse: collapse; }
+  .toc-review-table th, .toc-review-table td { padding: 6px; border-bottom: 1px solid var(--border-color, #eee); vertical-align: top; }
+  .toc-review-table input[type="text"], .toc-review-table input[type="number"], .toc-review-table textarea { max-width: 100%; box-sizing: border-box; }
+  .toc-warning-list { margin: 0; padding-left: 16px; color: #9a4f00; }
+  .toc-error-list { margin: 0; padding-left: 16px; color: #ba2121; }
+  .toc-danger { border-color: #ba2121 !important; color: #ba2121 !important; }
+  .toc-pill { display: inline-block; padding: 2px 7px; border-radius: 999px; background: #f5f5f5; border: 1px solid #ddd; }
+  .toc-panel { margin: 18px 0; padding: 12px; border: 1px solid var(--border-color, #ddd); border-radius: 6px; background: var(--body-bg, #fff); }
+  .toc-unsaved { display: none; color: #ba2121; font-weight: 700; }
+</style>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var changed = false;
+    var warning = document.getElementById("toc-unsaved-warning");
+    document.querySelectorAll("form.toc-review-form input, form.toc-review-form textarea, form.toc-review-form select").forEach(function (field) {
+      field.addEventListener("change", function () {
+        changed = true;
+        if (warning) warning.style.display = "inline";
+      });
+    });
+    document.querySelectorAll("form.toc-review-form").forEach(function (form) {
+      form.addEventListener("submit", function () { changed = false; });
+    });
+    window.addEventListener("beforeunload", function (event) {
+      if (!changed) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+  });
+</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:ebook_reader_ebookdocument_changelist' %}">Ebook documents</a>
+  &rsaquo; Review TOC
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="toc-review-wrap">
+  <h1>Review TOC: {{ header.book_title }}</h1>
+  <p>
+    <a class="button" href="{% url 'admin:ebook_reader_ebookdocument_change' ebook_document.id %}">Back to EbookDocument</a>
+    <span id="toc-unsaved-warning" class="toc-unsaved">Unsaved changes</span>
+  </p>
+
+  <div class="toc-summary-grid">
+    <div class="toc-summary-card"><strong>EbookDocument ID</strong>{{ header.ebook_id }}</div>
+    <div class="toc-summary-card"><strong>Processing status</strong>{{ header.status }}</div>
+    <div class="toc-summary-card"><strong>TOC mode</strong>{{ header.toc_mode }}</div>
+    <div class="toc-summary-card"><strong>Accepted TOC range</strong>{{ header.effective_toc_range }}</div>
+    <div class="toc-summary-card"><strong>Detected range</strong>{{ header.detected_toc_range }} / {{ header.toc_detection_confidence|default:"-" }}</div>
+    <div class="toc-summary-card"><strong>Page mapping</strong>{{ header.page_mapping_mode }} / {{ header.page_mapping_confidence|default:"-" }}</div>
+    <div class="toc-summary-card"><strong>Total PDF pages</strong>{{ header.total_pdf_pages|default:"-" }}</div>
+    <div class="toc-summary-card"><strong>Last run</strong>{% if header.last_processing_run %}{{ header.last_processing_run.status }} at {{ header.last_processing_run.started_at }}{% else %}-{% endif %}</div>
+    <div class="toc-summary-card"><strong>Candidates</strong>Total {{ header.total_candidate_count }}, invalid {{ header.invalid_count }}, unclassified {{ header.unclassified_count }}</div>
+    <div class="toc-summary-card"><strong>Lessons</strong>Valid {{ header.valid_count }}, verified {{ header.verified_lesson_count }}, low confidence {{ header.low_confidence_count }}</div>
+  </div>
+
+  <div class="toc-panel">
+    <h2>Ready Eligibility</h2>
+    {% if ready_eligibility.eligible %}
+      <p class="toc-pill">Eligible to mark ready after admin action</p>
+    {% else %}
+      <ul class="toc-error-list">
+        {% for reason in ready_eligibility.reasons|slice:":20" %}
+          <li>{{ reason }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+  <form class="toc-review-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save">
+
+    <div class="toc-panel">
+      <h2>Configuration</h2>
+      {{ settings_form.non_field_errors }}
+      <table>
+        {{ settings_form.as_table }}
+      </table>
+      <h3>Manual Mapping Anchors</h3>
+      {{ anchor_formset.management_form }}
+      {{ anchor_formset.non_form_errors }}
+      <table>
+        <thead><tr><th>Printed page</th><th>PDF page</th><th>Verified</th><th>Note</th><th>Delete</th></tr></thead>
+        <tbody>
+          {% for form in anchor_formset %}
+            <tr>
+              <td>{{ form.id }}{{ form.printed_page_number }}{{ form.printed_page_number.errors }}</td>
+              <td>{{ form.physical_pdf_page }}{{ form.physical_pdf_page.errors }}</td>
+              <td>{{ form.is_verified }}</td>
+              <td>{{ form.note }}</td>
+              <td>{% if form.DELETE %}{{ form.DELETE }}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="toc-toolbar">
+      <label>Search <input type="search" name="q_display" value="{{ search }}" disabled></label>
+      <a class="button" href="?">All</a>
+      <a class="button" href="?filter=low_confidence">Low confidence</a>
+      <a class="button" href="?filter=unverified">Unverified</a>
+      <a class="button" href="?filter=missing_page">Missing page</a>
+      <a class="button" href="?filter=duplicate_order">Duplicate order</a>
+      <a class="button" href="?filter=manually_edited">Manually edited</a>
+    </div>
+
+    <p>
+      <input type="text" name="search-helper" value="{{ search }}" placeholder="Search title" onkeydown="if(event.key==='Enter'){event.preventDefault(); window.location='?q='+encodeURIComponent(this.value)+'{% if filter_value %}&filter={{ filter_value }}{% endif %}';}">
+      <button type="button" onclick="window.location='?q='+encodeURIComponent(this.previousElementSibling.value)+'{% if filter_value %}&filter={{ filter_value }}{% endif %}'">Search</button>
+    </p>
+
+    {{ lesson_formset.management_form }}
+    {{ lesson_formset.non_form_errors }}
+    <div class="toc-table-wrap">
+      <table class="toc-review-table">
+        <thead>
+          <tr>
+            <th>Select</th><th>Order</th><th>Title</th><th>Printed page</th><th>PDF start</th><th>End</th>
+            <th>Source TOC page</th><th>Preview</th><th>Confidence</th><th>Parser</th>
+            <th>Warnings</th><th>Verified</th><th>Manual</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for form in lesson_formset %}
+            <tr>
+              <td>{{ form.id }}{{ form.selected }}</td>
+              <td>{{ form.order }}{{ form.order.errors }}</td>
+              <td>{{ form.title }}{{ form.title.errors }}{{ form.non_field_errors }}</td>
+              <td>{{ form.printed_page_number }}{{ form.printed_page_number.errors }}</td>
+              <td>{{ form.start_page }}{{ form.start_page.errors }}</td>
+              <td>{{ form.end_page }}{{ form.end_page.errors }}</td>
+              <td>{{ form.source_toc_page }}</td>
+              <td>
+                <span class="toc-pill">TOC {{ form.instance.source_toc_page|default:"-" }}</span>
+                <span class="toc-pill">PDF {{ form.instance.start_page|default:"-" }}</span>
+              </td>
+              <td>{{ form.confidence }}</td>
+              <td>{{ form.parser_strategy }}</td>
+              <td>{{ form.warnings }}</td>
+              <td>{{ form.is_verified }} {% if form.instance.verified_at %}<br>{{ form.instance.verified_at }}{% endif %}</td>
+              <td>{{ form.is_manually_edited }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="13">No lessons found for this filter.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="submit-row">
+      <button class="default" type="submit">Save edited rows</button>
+      <button name="action" value="mark_selected_verified" type="submit">Mark selected verified</button>
+      <button name="action" value="unverify_selected" type="submit">Unverify selected</button>
+      <label>Confirm delete <input name="confirm_delete" placeholder="yes"></label>
+      <button class="toc-danger" name="action" value="delete_selected" type="submit">Delete selected draft rows</button>
+    </p>
+  </form>
+
+  <form method="post" class="toc-review-form toc-panel">
+    {% csrf_token %}
+    <h2>Bulk Actions</h2>
+    <button name="action" value="mark_all_valid_verified" type="submit">Mark all valid rows verified</button>
+    <button name="action" value="rerun_processing" type="submit">Re-run processing without overwriting verified rows</button>
+    <button name="action" value="accept_detected_range" type="submit">Accept auto-detected TOC range</button>
+    <label>Confirm force <input name="confirm_force" value="" placeholder="yes"></label>
+    <button class="toc-danger" name="action" value="force_rerun_processing" type="submit">Force re-run</button>
+  </form>
+
+  <div class="toc-panel">
+    <h2>Invalid Candidates</h2>
+    <ul>
+      {% for item in invalid_candidates %}
+        <li><strong>Page {{ item.source_toc_page|default:"-" }}</strong>: {{ item.raw_source_text|default:item.title }} - {{ item.validation_errors }}</li>
+      {% empty %}
+        <li>No invalid candidates.</li>
+      {% endfor %}
+    </ul>
+    <h2>Unclassified Rows</h2>
+    <ul>
+      {% for item in unclassified_candidates %}
+        <li><strong>Page {{ item.source_toc_page|default:"-" }}</strong>: {{ item.raw_source_text }}</li>
+      {% empty %}
+        <li>No unclassified rows.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if filter_value %}&filter={{ filter_value }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Previous</a>{% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if filter_value %}&filter={{ filter_value }}{% endif %}{% if search %}&q={{ search }}{% endif %}">Next</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ book.title }} · Reader</title>
+  <style>
+    :root { --bg: #f2eee6; --paper: #fffefb; --ink: #24211d; --muted: #746b5f; --line: #ddd5c8; --accent: #8c3b2d; --font-size: 20px; color-scheme: light; }
+    html[data-theme="sepia"] { --bg: #e8dcc3; --paper: #f5ead2; --ink: #3e3022; --muted: #786149; --line: #cfbb97; --accent: #8a4b24; color-scheme: light; }
+    html[data-theme="dark"] { --bg: #15191d; --paper: #20262b; --ink: #e8e4dc; --muted: #aaa59c; --line: #394148; --accent: #e49a87; color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; transition: background .2s, color .2s; }
+    button, select, a { font: inherit; }
+    .toolbar { position: sticky; top: 0; z-index: 20; height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 18px; background: color-mix(in srgb, var(--paper) 92%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
+    .toolbar .title { min-width: 0; margin-right: auto; }
+    .toolbar strong, .toolbar small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .toolbar small { color: var(--muted); }
+    .control { min-height: 38px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); cursor: pointer; }
+    .control:hover { border-color: var(--accent); }
+    .sidebar { position: fixed; z-index: 30; inset: 0 auto 0 0; width: min(340px, 88vw); padding: 24px; background: var(--paper); border-right: 1px solid var(--line); transform: translateX(-101%); transition: transform .25s; overflow-y: auto; }
+    .sidebar.open { transform: none; }
+    .sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+    .sidebar h2 { margin: 0; font: 700 1.45rem Georgia, serif; }
+    .index-link { display: block; margin: 6px 0; padding: 12px; color: var(--ink); text-decoration: none; border-radius: 9px; }
+    .index-link:hover { background: var(--bg); color: var(--accent); }
+    .index-link small { display: block; margin-top: 3px; color: var(--muted); }
+    .backdrop { position: fixed; z-index: 25; inset: 0; background: #0008; opacity: 0; pointer-events: none; transition: opacity .25s; }
+    .backdrop.open { opacity: 1; pointer-events: auto; }
+    .reader { width: min(850px, calc(100% - 28px)); margin: 32px auto 80px; }
+    .page { margin: 0 0 32px; padding: clamp(24px, 6vw, 64px); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 16px 50px #24180d18; scroll-margin-top: 84px; }
+    .page-badge { display: table; margin: -10px auto 35px; padding: 6px 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+    .page-content { font-family: Georgia, "Noto Serif Devanagari", "Nirmala UI", serif; font-size: var(--font-size); line-height: 1.85; }
+    .reader-layout { width: 100%; }
+    .reader-line { margin: var(--line-gap, .65em) 0 0; font-size: calc(1em * var(--line-scale, 1)); }
+    .reader-align-left { text-align: left; }
+    .reader-align-center { text-align: center; }
+    .reader-align-right { text-align: right; }
+    .reader-bold { font-weight: 700; }
+    .reader-italic { font-style: italic; }
+    .reader-layout-row { display: flex; align-items: baseline; width: 100%; margin-top: var(--line-gap, .65em); }
+    .reader-layout-fragment { flex: 0 0 auto; font-size: calc(1em * var(--line-scale, 1)); white-space: nowrap; }
+    mark.reader-highlight { padding: .06em 0; border-radius: 2px; background: #ffe36a; color: #201b10; }
+    .empty { padding: 70px 24px; text-align: center; color: var(--muted); }
+    .toast { position: fixed; z-index: 40; right: 18px; bottom: 18px; max-width: min(380px, calc(100% - 36px)); padding: 12px 16px; border-radius: 10px; background: #252a2e; color: white; box-shadow: 0 12px 32px #0005; opacity: 0; transform: translateY(12px); pointer-events: none; transition: .2s; }
+    .toast.show { opacity: 1; transform: none; }
+    @media (max-width: 700px) { .author { display: none !important; } .toolbar { padding: 0 9px; gap: 6px; } .control { padding-inline: 9px; } .theme-label { display: none; } .page { padding: 26px 20px; } .reader-layout-row { font-size: .86em; } }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <button class="control" id="drawerOpen" type="button" aria-label="Open table of contents" aria-controls="indexDrawer">☰</button>
+    <div class="title"><strong>{{ book.title }}</strong><small class="author">{{ book.author }}</small></div>
+    <button class="control" id="fontDown" type="button" aria-label="Decrease font size">A−</button>
+    <button class="control" id="fontUp" type="button" aria-label="Increase font size">A+</button>
+    <label><span class="theme-label">Theme </span><select class="control" id="themeSelect" aria-label="Reader theme"><option value="light">Light</option><option value="sepia">Sepia</option><option value="dark">Dark</option></select></label>
+    <button class="control" id="highlightButton" type="button">Highlight</button>
+  </header>
+
+  <aside class="sidebar" id="indexDrawer" aria-label="Table of contents" aria-hidden="true">
+    <div class="sidebar-head"><h2>Contents</h2><button class="control" id="drawerClose" type="button" aria-label="Close table of contents">×</button></div>
+    {% for item in index_items %}
+      <a class="index-link" href="#page-{{ item.start_page }}">{{ item.title }}<small>Pages {{ item.start_page }}–{{ item.end_page }}</small></a>
+    {% empty %}
+      <p>No index has been added yet.</p>
+    {% endfor %}
+  </aside>
+  <div class="backdrop" id="drawerBackdrop"></div>
+
+  <main class="reader" id="readerContent">
+    {% for page in pages %}
+      <article class="page" id="page-{{ page.page_number }}" data-page-id="{{ page.id }}">
+        <div class="page-badge">Page {{ page.page_number }} · <a href="{{ book.pdf_file.url }}#page={{ page.page_number }}" target="_blank" rel="noopener">Original</a></div>
+        <div class="page-content">{{ page.content|safe }}</div>
+      </article>
+    {% empty %}
+      <div class="empty"><h2>This book is being prepared</h2><p>Status: {{ book.get_processing_status_display }} · {{ book.processed_pages }}/{{ book.total_pages|default:"?" }} pages processed.</p></div>
+    {% endfor %}
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <form hidden>{% csrf_token %}</form>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const drawer = document.getElementById("indexDrawer");
+      const backdrop = document.getElementById("drawerBackdrop");
+      const toast = document.getElementById("toast");
+      const themeSelect = document.getElementById("themeSelect");
+      const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+      let fontSize = Number(localStorage.getItem("ebook-font-size")) || 20;
+      let toastTimer;
+
+      const showToast = (message) => {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+      };
+      const closeDrawer = () => { drawer.classList.remove("open"); backdrop.classList.remove("open"); drawer.setAttribute("aria-hidden", "true"); };
+      const openDrawer = () => { drawer.classList.add("open"); backdrop.classList.add("open"); drawer.setAttribute("aria-hidden", "false"); document.getElementById("drawerClose").focus(); };
+      const setFontSize = (value) => { fontSize = Math.max(14, Math.min(32, value)); root.style.setProperty("--font-size", `${fontSize}px`); localStorage.setItem("ebook-font-size", fontSize); };
+      const setTheme = (theme) => { root.dataset.theme = theme; themeSelect.value = theme; localStorage.setItem("ebook-theme", theme); };
+
+      setFontSize(fontSize);
+      setTheme(localStorage.getItem("ebook-theme") || "light");
+      document.getElementById("drawerOpen").addEventListener("click", openDrawer);
+      document.getElementById("drawerClose").addEventListener("click", closeDrawer);
+      backdrop.addEventListener("click", closeDrawer);
+      drawer.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeDrawer));
+      document.getElementById("fontDown").addEventListener("click", () => setFontSize(fontSize - 2));
+      document.getElementById("fontUp").addEventListener("click", () => setFontSize(fontSize + 2));
+      themeSelect.addEventListener("change", () => setTheme(themeSelect.value));
+      document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeDrawer(); });
+
+      document.getElementById("highlightButton").addEventListener("click", async () => {
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed || !selection.rangeCount) return showToast("Select text on one page first.");
+        const range = selection.getRangeAt(0);
+        const startPage = range.startContainer.parentElement?.closest(".page");
+        const endPage = range.endContainer.parentElement?.closest(".page");
+        if (!startPage || startPage !== endPage) return showToast("Keep the selection within one page.");
+        const selectedText = selection.toString().trim();
+        if (!selectedText) return showToast("Select text first.");
+
+        const mark = document.createElement("mark");
+        mark.className = "reader-highlight";
+        try { mark.appendChild(range.extractContents()); range.insertNode(mark); selection.removeAllRanges(); }
+        catch (_) { return showToast("That selection cannot be highlighted. Try a smaller passage."); }
+
+        try {
+          const response = await fetch("{% url 'ebook_reader:save_highlight' %}", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+            body: JSON.stringify({ page_id: Number(startPage.dataset.pageId), selected_text: selectedText, color: "yellow" })
+          });
+          if (response.status === 403 || response.redirected) throw new Error("Sign in to save highlights.");
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Highlight could not be saved.");
+          showToast("Highlight saved.");
+        } catch (error) {
+          mark.replaceWith(...mark.childNodes);
+          showToast(error.message || "Highlight could not be saved.");
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

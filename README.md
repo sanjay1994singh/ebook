@@ -143,3 +143,333 @@ After changing `.env`, run migrations again:
 ```
 
 React Native should call this backend API. The app should never connect directly to MySQL.
+
+## Ebook Reader Background Worker
+
+The new `ebook_reader` app uses Celery with Redis for explicit background PDF inspection.
+This does not run automatically when a book is saved.
+
+Start Redis first:
+
+```powershell
+redis-server
+```
+
+Start the Django server:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py runserver 0.0.0.0:8000
+```
+
+Start the Celery worker in a second terminal:
+
+```powershell
+.\.venv\Scripts\celery.exe -A ebook_backend worker -l info
+```
+
+Queue inspection from Django admin:
+
+```text
+Admin > Ebook reader > Ebook documents > select rows > Inspect selected ebook PDFs
+```
+
+Inspection status rule:
+
+- `review_required`: PDF has embedded text or bookmarks, so it is ready for admin review in the new ebook workflow.
+- `pending`: PDF is readable but has no embedded text/bookmarks, so it waits for a later OCR phase.
+- `failed`: PDF is missing, corrupt, encrypted, empty, or could not be inspected.
+
+Inspect one ebook PDF synchronously from terminal:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py inspect_ebook_pdf <ebook_id>
+```
+
+Useful `.env` values:
+
+```text
+CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/0
+CELERY_TASK_ALWAYS_EAGER=False
+```
+
+## New Ebook System Production Readiness
+
+The new ebook system is a beta layer beside the old reader. Disabling it does not delete books, PDFs, lessons, progress, OCR data, or review data. The old reader remains the fallback.
+
+### Required packages
+
+Python packages are listed in `requirements.txt`:
+
+- Django / Django REST Framework
+- Celery
+- redis
+- PyMuPDF
+- pypdf / pypdfium2
+- Pillow
+- pytesseract
+
+System packages needed on the server:
+
+- Redis server for Celery
+- Tesseract OCR
+- Hindi language data for Tesseract, usually `hin`
+
+### Feature flags
+
+Use these `.env` values for gradual rollout:
+
+```text
+EBOOK_SYSTEM_ENABLED=True
+EBOOK_WEB_READER_ENABLED=True
+EBOOK_MOBILE_READER_ENABLED=True
+EBOOK_READER_STAFF_ONLY=True
+EBOOK_PROCESSING_ENABLED=True
+EBOOK_READER_TOC_SCAN_PAGE_LIMIT=40
+EBOOK_MAX_PDF_PAGES=2500
+EBOOK_MAX_PDF_SIZE_MB=500
+EBOOK_SIGNED_URL_EXPIRES_SECONDS=900
+```
+
+Rules:
+
+- `EBOOK_SYSTEM_ENABLED=False` disables web/mobile/processing access.
+- `EBOOK_READER_STAFF_ONLY=True` keeps the beta reader staff-only.
+- Each `EbookDocument` must also be enabled in admin using:
+  - `new_ebook_reader_enabled`
+  - `new_ebook_reader_web_enabled`
+  - `new_ebook_reader_mobile_enabled`
+- Non-ready ebooks never open in the new reader.
+- Old reader links are not redirected.
+
+### Local setup
+
+```powershell
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py check
+.\.venv\Scripts\python.exe manage.py runserver 0.0.0.0:8000
+```
+
+Worker:
+
+```powershell
+redis-server
+.\.venv\Scripts\celery.exe -A ebook_backend worker -l info
+```
+
+### Processing one ebook
+
+```powershell
+.\.venv\Scripts\python.exe manage.py onboard_ebooks --book-id 12 --dry-run
+.\.venv\Scripts\python.exe manage.py onboard_ebooks --book-id 12
+.\.venv\Scripts\python.exe manage.py inspect_ebook_pdf <ebook_id>
+.\.venv\Scripts\python.exe manage.py detect_ebook_toc <ebook_id>
+.\.venv\Scripts\python.exe manage.py process_ebook_toc <ebook_id> --dry-run
+```
+
+### Batch onboarding
+
+Start small:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py onboard_ebooks --all-with-pdf --missing-only --batch-size 10 --dry-run
+.\.venv\Scripts\python.exe manage.py onboard_ebooks --all-with-pdf --missing-only --batch-size 10
+```
+
+Queue inspection only when the worker is running:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py onboard_ebooks --all-with-pdf --missing-only --batch-size 25 --queue-inspection
+```
+
+### Reviewing TOCs
+
+Admin path:
+
+```text
+Admin > Ebook reader > Ebook documents > Review TOC
+```
+
+Review steps:
+
+1. Confirm PDF inspection succeeded.
+2. Confirm TOC mode: auto, manual, or none.
+3. Accept detected range or enter manual range.
+4. Confirm page mapping.
+5. Process TOC.
+6. Fix invalid or low-confidence rows.
+7. Verify lessons.
+8. Mark document ready only after review.
+9. Enable web/mobile per-book beta flags only when ready for testing.
+
+### React Native requirements
+
+The current mobile beta integration can call the API and open the secure web reader. A fully embedded native PDF reader will need native package installation and a new app build, for example a maintained PDF component compatible with the installed React Native/Expo version.
+
+### Manual QA checklist
+
+Web:
+
+- Auto TOC range
+- Manual TOC range
+- No TOC
+- One-page TOC
+- Multi-page TOC
+- Lesson navigation
+- Secure PDF loading
+- Progress restore
+- Access denied
+- Feature disabled
+
+Android:
+
+- Open ebook
+- Lesson navigation
+- Progress update
+- Expired PDF URL or retry flow
+- Background/foreground
+- Large lesson list
+
+iOS:
+
+- Same scenarios as Android
+- Native PDF compatibility after native library adoption
+- Back navigation and return state
+
+PDF types:
+
+- Unicode text PDF
+- Legacy Hindi text PDF
+- Fully scanned PDF
+- PDF bookmarks
+- No TOC
+- Unusual TOC page range
+- Large PDF
+- Corrupt/encrypted PDF
+
+### Rollback
+
+Fast rollback:
+
+```text
+EBOOK_SYSTEM_ENABLED=False
+```
+
+Partial rollback:
+
+```text
+EBOOK_WEB_READER_ENABLED=False
+EBOOK_MOBILE_READER_ENABLED=False
+EBOOK_PROCESSING_ENABLED=False
+```
+
+Expected rollback behavior:
+
+- Users continue using the old reader.
+- No migration rollback is required.
+- Ebook data remains in the database.
+- Celery workers can be paused.
+- New APIs become inaccessible or hidden.
+- Old `/web/reader/<page_id>/` URLs remain unchanged.
+
+### Troubleshooting
+
+- Run `manage.py check` after deployment.
+- If scanned TOC detection fails, verify Tesseract and Hindi language data.
+- If PDF access fails, verify `MEDIA_ROOT` and file storage permissions.
+- If queued jobs do not run, check Redis and Celery worker logs.
+- Keep `EBOOK_READER_TOC_SCAN_PAGE_LIMIT` modest for large scanned PDFs.
+
+## Line-oriented scholarly reader
+
+The `ebook_reader` app also provides a standalone, editable Unicode-text reader at
+`/ebooks/`. It intentionally coexists with the existing beta PDF reader and API.
+
+### Setup and migration
+
+From the `backend` directory, activate the virtual environment and run:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
+
+Then open `http://127.0.0.1:8000/admin/`, add an **Ebook reader → Book**, and
+upload a PDF. Extracted pages are created after the database transaction commits.
+Use the inline index rows to add lesson titles and start/end page ranges. Page text
+can be corrected in the CKEditor fields. Open `http://127.0.0.1:8000/ebooks/` to
+test the public library and reader; sign in before saving highlights.
+
+Run the focused verification suite with:
+
+```powershell
+$env:DB_ENGINE="sqlite"
+python manage.py test ebook_reader.tests.test_line_reader
+python manage.py check
+python manage.py makemigrations --check --dry-run
+```
+
+Text PDFs are normalized to NFC Unicode and escaped before being stored as page-level
+rich HTML. Reading order, relative font size, bold/italic emphasis, alignment, running
+headers, and printed page numbers are retained from PDF/OCR geometry. A PDF-specific
+legacy font mapping can be configured as a dotted
+callable in `EBOOK_READER_LEGACY_TEXT_CONVERTER`. Scanned/image-only PDFs require
+the project's OCR pipeline because `pypdf` cannot extract text from images.
+
+Legacy-font and scanned pages are automatically OCRed with `hin+eng`. Install
+Tesseract with Hindi language data on the server and, when it is not on `PATH`, set:
+
+```text
+EBOOK_TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
+EBOOK_TESSDATA_DIR=C:\Users\sanja\AppData\Local\Tesseract-OCR\tessdata
+EBOOK_OCR_LANGUAGES=hin+eng
+EBOOK_LEGACY_OCR_LANGUAGES=hin
+EBOOK_OCR_TESSERACT_CONFIG=--psm 3
+EBOOK_OCR_CROP_MARGINS=0.12,0.13,0.12,0.10
+```
+
+`hin+eng` remains the general scanned-page strategy. Detected KrutiDev/legacy Hindi
+pages use the more accurate Hindi-only model. Layout OCR deliberately reads the full
+page so text and printed numbers outside the ornamental frame are not lost. PyMuPDF
+masks edge-border strips and picture/logo-shaped assets before OCR while preserving
+raster text strips. `EBOOK_OCR_CROP_MARGINS` applies only to the compatibility
+plain-text OCR helper.
+
+PyMuPDF is attempted first so decorations can be masked; `pdf2image` is the clean
+rendering fallback. Set `EBOOK_PDF2IMAGE_POPPLER_PATH` if Poppler is not on `PATH`. Set
+`EBOOK_READER_FORCE_OCR=True` to OCR every page. To repair pages extracted before
+this pipeline was enabled, select their books in admin and run **Re-extract selected
+PDFs (OCR when needed)**.
+
+For large libraries, run extraction outside web requests:
+
+```text
+EBOOK_READER_ASYNC_PROCESSING=True
+CELERY_BROKER_URL=redis://127.0.0.1:6379/0
+```
+
+```powershell
+celery -A ebook_backend worker --loglevel=INFO
+python manage.py import_line_ebooks "E:\Vani PDF"
+```
+
+The import command skips titles already present and queues one durable job per book.
+Use `--recursive` for nested folders, `--author "Name"` to apply an author, or
+`--synchronous` only for small local tests. Each result stores physical PDF pages,
+safe layout-aware HTML, clean page-level plain text, visual row count, and the extraction method. `IndexItem`
+ranges always use physical PDF page numbers; the reader links every page back to its
+original PDF rendering for scholarly verification.
+
+### Validated legacy-font corpus
+
+The adaptive detector was checked across all 792 pages of three representative
+Microsoft Print-to-PDF books: `Abhas ultha PDF.pdf` (218 pages),
+`Akand keli Ras PDF.pdf` (122 pages), and `Anmol Vachan PDF.pdf` (452 pages).
+All 792 embedded text layers were legacy font-mapped (0% Devanagari Unicode), while
+the rendered pages were visually clean Hindi. These files therefore take the OCR
+path automatically. Their different page-number schemes are why TOC/index ranges
+are stored against physical PDF pages and every extracted page retains an original
+PDF link.

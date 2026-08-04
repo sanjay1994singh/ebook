@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-Book Library</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; background: #f5f1e8; color: #29251f; }
+    body { margin: 0; }
+    main { width: min(1080px, calc(100% - 32px)); margin: 0 auto; padding: 64px 0; }
+    h1 { font-family: Georgia, serif; font-size: clamp(2rem, 6vw, 4rem); margin: 0 0 10px; }
+    .lead { color: #6d6253; margin: 0 0 36px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+    .book { display: block; padding: 24px; color: inherit; text-decoration: none; background: #fffdf8; border: 1px solid #ded5c5; border-radius: 16px; box-shadow: 0 10px 30px #4b3c2420; transition: transform .2s, box-shadow .2s; }
+    .book:hover { transform: translateY(-3px); box-shadow: 0 16px 36px #4b3c2430; }
+    .book h2 { margin: 0 0 8px; font: 700 1.25rem Georgia, serif; }
+    .meta { color: #776b5c; font-size: .92rem; }
+    .empty { padding: 36px; border: 1px dashed #b9ad99; border-radius: 16px; text-align: center; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>E-Book Library</h1>
+    <p class="lead">Religious and scholarly texts, prepared for focused reading.</p>
+    <section class="grid" aria-label="Available books">
+      {% for book in books %}
+        <a class="book" href="{% url 'ebook_reader:reader' book.id %}">
+          <h2>{{ book.title }}</h2>
+          <div class="meta">{{ book.author|default:"Author not listed" }} · {{ book.page_count }} page{{ book.page_count|pluralize }} · {{ book.get_processing_status_display }}</div>
+        </a>
+      {% empty %}
+        <div class="empty">No books are available yet. Upload one in Django admin.</div>
+      {% endfor %}
+    </section>
+  </main>
+</body>
+</html>

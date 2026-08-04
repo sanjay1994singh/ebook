@@ -1,0 +1,509 @@
+{% extends "library/web/base.html" %}
+
+{% block shell_class %}ebook-beta-reader-shell{% endblock %}
+{% block title %}{{ book.title }} - Beta reader{% endblock %}
+
+{% block body %}
+<style>
+  .ebook-beta-reader-shell {
+    width: min(100%, 1280px);
+    background: #f4f4f4;
+  }
+
+  .ebook-beta-toolbar {
+    height: 64px;
+    background: var(--orange);
+    color: #fff;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+  }
+
+  .ebook-beta-title {
+    min-width: 0;
+    text-align: center;
+    font-weight: 800;
+  }
+
+  .ebook-beta-title span {
+    display: block;
+    font-size: 13px;
+    opacity: .9;
+  }
+
+  .ebook-beta-tools,
+  .ebook-beta-left-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ebook-beta-button {
+    border: 0;
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    min-width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .ebook-beta-button:focus,
+  .ebook-beta-lesson:focus {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  .ebook-beta-layout {
+    min-height: calc(100vh - 64px);
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .ebook-beta-sidebar {
+    background: #fff;
+    border-right: 1px solid var(--border);
+    overflow: auto;
+  }
+
+  .ebook-beta-sidebar-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff7eb;
+    border-bottom: 1px solid var(--border);
+    padding: 14px;
+  }
+
+  .ebook-beta-sidebar-head strong {
+    display: block;
+    color: var(--red);
+    font-size: 20px;
+  }
+
+  .ebook-beta-lesson {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 10px;
+    padding: 13px 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ebook-beta-lesson.active {
+    background: #fff0d8;
+    border-left: 5px solid var(--orange);
+  }
+
+  .ebook-beta-lesson small {
+    color: var(--muted);
+  }
+
+  .ebook-beta-main {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .ebook-beta-statusbar {
+    min-height: 54px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 14px;
+  }
+
+  .ebook-beta-statusbar strong {
+    color: var(--red);
+  }
+
+  .ebook-beta-viewer-wrap {
+    position: relative;
+    min-height: 0;
+    overflow: auto;
+    background: #e8e8e8;
+    display: grid;
+    place-items: start center;
+    padding: 18px;
+  }
+
+  .ebook-beta-canvas {
+    max-width: 100%;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(0,0,0,.16);
+  }
+
+  .ebook-beta-fallback {
+    width: min(100%, 960px);
+    height: calc(100vh - 150px);
+    border: 0;
+    background: #fff;
+    display: none;
+  }
+
+  .ebook-beta-message {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 18px;
+    max-width: 620px;
+  }
+
+  .ebook-beta-bottom {
+    position: sticky;
+    bottom: 0;
+    display: none;
+    background: var(--orange);
+    color: #fff;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+  }
+
+  .ebook-beta-bottom button {
+    border: 0;
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    padding: 12px 8px;
+    font-weight: 800;
+  }
+
+  .ebook-beta-drawer-backdrop {
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .ebook-beta-toolbar {
+      grid-template-columns: auto 1fr auto;
+      height: 74px;
+    }
+
+    .ebook-beta-layout {
+      display: block;
+      min-height: calc(100vh - 74px);
+    }
+
+    .ebook-beta-sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: min(86vw, 340px);
+      z-index: 20;
+      transform: translateX(-102%);
+      transition: transform .2s ease;
+      box-shadow: 16px 0 34px rgba(0,0,0,.24);
+    }
+
+    .ebook-beta-sidebar.open {
+      transform: translateX(0);
+    }
+
+    .ebook-beta-drawer-backdrop.open {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 19;
+      background: rgba(0,0,0,.45);
+    }
+
+    .ebook-beta-statusbar {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ebook-beta-viewer-wrap {
+      padding: 8px;
+      min-height: calc(100vh - 176px);
+    }
+
+    .ebook-beta-bottom {
+      display: grid;
+    }
+  }
+</style>
+
+<header class="ebook-beta-toolbar">
+  <div class="ebook-beta-left-tools">
+    <a class="ebook-beta-button" href="{% url 'web_book_detail' book.slug %}" aria-label="Back to book detail">‹</a>
+    <button class="ebook-beta-button" type="button" id="lessonDrawerButton" aria-label="Open lesson list">☰</button>
+  </div>
+  <div class="ebook-beta-title">
+    <span>Beta ebook reader</span>
+    {{ book.title }}
+  </div>
+  <div class="ebook-beta-tools">
+    <button class="ebook-beta-button" type="button" id="previousLessonButton" aria-label="Previous lesson">‹‹</button>
+    <button class="ebook-beta-button" type="button" id="nextLessonButton" aria-label="Next lesson">››</button>
+  </div>
+</header>
+
+{{ reader_payload|json_script:"ebook-reader-data" }}
+
+<div class="ebook-beta-drawer-backdrop" id="lessonDrawerBackdrop"></div>
+<div class="ebook-beta-layout">
+  <aside class="ebook-beta-sidebar" id="lessonSidebar" aria-label="Lesson list">
+    <div class="ebook-beta-sidebar-head">
+      <strong>Lessons</strong>
+      <span>{{ lessons|length }} verified lessons</span>
+    </div>
+    <div id="lessonList">
+      {% for lesson in lessons %}
+        <button
+          class="ebook-beta-lesson{% if current_lesson and current_lesson.id == lesson.id %} active{% endif %}"
+          type="button"
+          data-lesson-id="{{ lesson.id }}"
+          data-start-page="{{ lesson.start_page }}"
+          aria-label="Open lesson {{ lesson.title }}"
+        >
+          <small>{% if lesson.order %}{{ lesson.order }}{% else %}-{% endif %}</small>
+          <span>
+            {{ lesson.title }}
+            <small>PDF page {{ lesson.start_page }}</small>
+          </span>
+        </button>
+      {% empty %}
+        <div class="ebook-beta-message">No verified lessons are available yet.</div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <main class="ebook-beta-main">
+    <section class="ebook-beta-statusbar" aria-live="polite">
+      <div>
+        Page <strong id="currentPageLabel">{{ initial_page }}</strong> / {{ total_pages }}
+      </div>
+      <div>
+        Current lesson:
+        <strong id="currentLessonLabel">{% if current_lesson %}{{ current_lesson.title }}{% else %}Not matched{% endif %}</strong>
+      </div>
+      <div id="readerStateLabel">Loading PDF...</div>
+    </section>
+
+    <section class="ebook-beta-viewer-wrap" id="viewerWrap">
+      <canvas class="ebook-beta-canvas" id="pdfCanvas" aria-label="PDF page viewer"></canvas>
+      <iframe class="ebook-beta-fallback" id="pdfFallback" title="PDF fallback viewer"></iframe>
+      <div class="ebook-beta-message" id="readerMessage" hidden>
+        <strong id="readerMessageTitle">PDF failed to load</strong>
+        <p id="readerMessageBody">Please retry. If the secure URL has expired, refresh the page.</p>
+        <button class="ebook-beta-button" type="button" id="readerRetryButton">Retry</button>
+      </div>
+    </section>
+
+    <nav class="ebook-beta-bottom" aria-label="Reader navigation">
+      <button type="button" id="mobilePreviousPage">Previous</button>
+      <button type="button" id="mobileDrawerButton">Lessons</button>
+      <button type="button" id="mobileNextPage">Next</button>
+    </nav>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" crossorigin="anonymous"></script>
+<script>
+  (function () {
+    const data = JSON.parse(document.getElementById("ebook-reader-data").textContent);
+    const canvas = document.getElementById("pdfCanvas");
+    const context = canvas.getContext("2d");
+    const fallback = document.getElementById("pdfFallback");
+    const stateLabel = document.getElementById("readerStateLabel");
+    const pageLabel = document.getElementById("currentPageLabel");
+    const lessonLabel = document.getElementById("currentLessonLabel");
+    const message = document.getElementById("readerMessage");
+    const lessonSidebar = document.getElementById("lessonSidebar");
+    const drawerBackdrop = document.getElementById("lessonDrawerBackdrop");
+    const lessonButtons = Array.from(document.querySelectorAll(".ebook-beta-lesson"));
+    let pdfDoc = null;
+    let currentPage = data.initialPage || 1;
+    let rendering = false;
+    let queuedPage = null;
+    let progressTimer = null;
+
+    function clampPage(page) {
+      const parsed = Number.parseInt(page, 10);
+      if (!Number.isFinite(parsed)) return 1;
+      return Math.max(1, Math.min(parsed, data.totalPages || 1));
+    }
+
+    function lessonForPage(page) {
+      return data.lessons.find((lesson) => {
+        return lesson.start_page <= page && page <= (lesson.active_end_page || data.totalPages || page);
+      }) || null;
+    }
+
+    function updateUrl(page) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("page", page);
+      window.history.pushState({ page }, "", url);
+    }
+
+    function updateLesson(page) {
+      const activeLesson = lessonForPage(page);
+      lessonLabel.textContent = activeLesson ? activeLesson.title : "Not matched";
+      lessonButtons.forEach((button) => {
+        button.classList.toggle("active", activeLesson && Number(button.dataset.lessonId) === activeLesson.id);
+      });
+    }
+
+    function openDrawer() {
+      lessonSidebar.classList.add("open");
+      drawerBackdrop.classList.add("open");
+      const activeButton = lessonSidebar.querySelector(".ebook-beta-lesson.active") || lessonSidebar.querySelector(".ebook-beta-lesson");
+      if (activeButton) activeButton.focus();
+    }
+
+    function closeDrawer() {
+      lessonSidebar.classList.remove("open");
+      drawerBackdrop.classList.remove("open");
+    }
+
+    function showFallback(page) {
+      canvas.style.display = "none";
+      fallback.style.display = "block";
+      fallback.src = `${data.pdfUrl}#page=${page}`;
+      stateLabel.textContent = "Using browser PDF fallback";
+    }
+
+    function showError(title, body) {
+      canvas.style.display = "none";
+      fallback.style.display = "none";
+      message.hidden = false;
+      document.getElementById("readerMessageTitle").textContent = title;
+      document.getElementById("readerMessageBody").textContent = body;
+      stateLabel.textContent = title;
+    }
+
+    function renderPage(page, pushHistory) {
+      currentPage = clampPage(page);
+      pageLabel.textContent = currentPage;
+      updateLesson(currentPage);
+      if (pushHistory) updateUrl(currentPage);
+      if (!pdfDoc) {
+        showFallback(currentPage);
+        return;
+      }
+      if (rendering) {
+        queuedPage = currentPage;
+        return;
+      }
+      rendering = true;
+      stateLabel.textContent = "Loading page...";
+      message.hidden = true;
+      pdfDoc.getPage(currentPage).then((pdfPage) => {
+        const wrap = document.getElementById("viewerWrap");
+        const viewport = pdfPage.getViewport({ scale: 1 });
+        const availableWidth = Math.max(300, wrap.clientWidth - 28);
+        const scale = Math.min(1.6, availableWidth / viewport.width);
+        const scaled = pdfPage.getViewport({ scale });
+        canvas.width = scaled.width;
+        canvas.height = scaled.height;
+        canvas.style.display = "block";
+        fallback.style.display = "none";
+        return pdfPage.render({ canvasContext: context, viewport: scaled }).promise;
+      }).then(() => {
+        stateLabel.textContent = "Ready";
+      }).catch(() => {
+        showFallback(currentPage);
+      }).finally(() => {
+        rendering = false;
+        if (queuedPage !== null) {
+          const nextPage = queuedPage;
+          queuedPage = null;
+          renderPage(nextPage, false);
+        }
+      });
+    }
+
+    function goToPage(page, pushHistory) {
+      renderPage(clampPage(page), pushHistory !== false);
+      scheduleProgressSave();
+      closeDrawer();
+    }
+
+    function saveProgressNow() {
+      if (!data.progressUrl || !currentPage) return;
+      window.clearTimeout(progressTimer);
+      progressTimer = null;
+      fetch(data.progressUrl, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": data.csrfToken || ""
+        },
+        body: JSON.stringify({ current_page: currentPage })
+      }).catch(() => {
+        stateLabel.textContent = "Progress sync pending";
+      });
+    }
+
+    function scheduleProgressSave() {
+      window.clearTimeout(progressTimer);
+      progressTimer = window.setTimeout(saveProgressNow, 900);
+    }
+
+    function goToAdjacentLesson(direction) {
+      const active = lessonForPage(currentPage);
+      const index = active ? data.lessons.findIndex((lesson) => lesson.id === active.id) : -1;
+      const target = data.lessons[index + direction];
+      if (target && target.start_page) goToPage(target.start_page, true);
+    }
+
+    lessonButtons.forEach((button) => {
+      button.addEventListener("click", () => goToPage(button.dataset.startPage, true));
+    });
+
+    document.getElementById("lessonDrawerButton").addEventListener("click", openDrawer);
+    document.getElementById("mobileDrawerButton").addEventListener("click", openDrawer);
+    drawerBackdrop.addEventListener("click", closeDrawer);
+    document.getElementById("previousLessonButton").addEventListener("click", () => goToAdjacentLesson(-1));
+    document.getElementById("nextLessonButton").addEventListener("click", () => goToAdjacentLesson(1));
+    document.getElementById("mobilePreviousPage").addEventListener("click", () => goToPage(currentPage - 1, true));
+    document.getElementById("mobileNextPage").addEventListener("click", () => goToPage(currentPage + 1, true));
+    document.getElementById("readerRetryButton").addEventListener("click", () => window.location.reload());
+
+    window.addEventListener("popstate", (event) => {
+      const page = event.state && event.state.page ? event.state.page : new URL(window.location.href).searchParams.get("page");
+      goToPage(page || 1, false);
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") goToPage(currentPage - 1, true);
+      if (event.key === "ArrowRight") goToPage(currentPage + 1, true);
+      if (event.key === "Escape") closeDrawer();
+    });
+
+    window.addEventListener("pagehide", saveProgressNow);
+
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      pdfjsLib.getDocument({ url: data.pdfUrl, withCredentials: true }).promise
+        .then((doc) => {
+          pdfDoc = doc;
+          stateLabel.textContent = "Ready";
+          renderPage(currentPage, false);
+          scheduleProgressSave();
+        })
+        .catch(() => {
+          showFallback(currentPage);
+        });
+    } else {
+      showFallback(currentPage);
+    }
+
+    if (!data.lessons.length) {
+      showError("No lessons", "This ebook has no verified lessons yet.");
+    }
+  }());
+</script>
+{% endblock %}

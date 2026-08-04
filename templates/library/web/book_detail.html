@@ -49,6 +49,9 @@
             <span class="disabled">Page नहीं मिला</span>
             <span class="disabled">PDF extract करें</span>
           {% endif %}
+          {% if new_reader_preview_url %}
+            <a href="{{ new_reader_preview_url }}">New reader preview</a>
+          {% endif %}
         </div>
       </div>
     </div>

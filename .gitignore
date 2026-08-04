@@ -64,6 +64,7 @@ db.sqlite3-journal
 # Django uploaded/generated files
 media/
 staticfiles/
+audio_uploads/
 
 # IDE
 .idea/
