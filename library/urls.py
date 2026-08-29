@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.decorators.cache import cache_page
 
 from .views import (
     BookDetailView,
@@ -38,7 +39,7 @@ urlpatterns = [
     path("contact-messages/", ContactMessageView.as_view(), name="contact_messages"),
     path("social-links/", SocialLinkListView.as_view(), name="social_links"),
     path("side-menu/", SideMenuItemListView.as_view(), name="side_menu"),
-    path("latest/", LatestContentView.as_view(), name="latest_content"),
+    path("latest/", cache_page(60 * 5)(LatestContentView.as_view()), name="latest_content"),
     path("authors/", AuthorMenuView.as_view(), name="author_menu"),
     path("pages/<int:pk>/", BookPageDetailView.as_view(), name="book_page_detail"),
     path("chapters/<int:chapter_id>/pages/", ChapterPageListView.as_view(), name="chapter_page_list"),

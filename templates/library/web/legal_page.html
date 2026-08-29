@@ -1,0 +1,23 @@
+{% extends "library/web/base.html" %}
+
+{% block title %}{{ title }} | Nikunj Ras{% endblock %}
+{% block shell_class %}site-shell{% endblock %}
+
+{% block body %}
+  {% include "library/web/partials/site_header.html" %}
+  <section class="legal-page">
+    <div class="legal-card">
+      <p class="legal-kicker">Nikunj Ras</p>
+      <h1>{{ title }}</h1>
+      <p class="legal-updated">Last updated: {{ updated_on }}</p>
+      {% for section in sections %}
+        <article class="legal-section">
+          <h2>{{ section.heading }}</h2>
+          <p>{{ section.body }}</p>
+        </article>
+      {% endfor %}
+      <p class="legal-contact">Contact: <a href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+    </div>
+  </section>
+  {% include "library/web/partials/site_footer.html" %}
+{% endblock %}

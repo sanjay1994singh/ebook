@@ -94,6 +94,8 @@ def extract_pdf_to_book(book):
             book=book,
             title=chapter_data["title"],
             order=index + 1,
+            start_page=start_page,
+            end_page=end_page,
         )
 
         for page_number in range(start_page, end_page + 1):

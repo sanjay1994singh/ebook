@@ -715,3 +715,22 @@ def _samples_from_metadata(metadata):
             )
         )
     return samples
+
+
+if not getattr(settings, "EBOOK_READER_ADMIN_ENABLED", False):
+    for model in (
+        Book,
+        BookPage,
+        EbookDocument,
+        EbookLesson,
+        EbookPageMappingAnchor,
+        EbookProcessingRun,
+        EbookReadingProgress,
+        EbookTocCandidate,
+        Highlight,
+        IndexItem,
+    ):
+        try:
+            admin.site.unregister(model)
+        except admin.sites.NotRegistered:
+            pass

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "social_django",
     "ckeditor",
     "accounts",
+    "app_updates",
     "library",
     "content",
     "banners",
@@ -211,6 +212,7 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 EBOOK_SYSTEM_ENABLED = os.getenv("EBOOK_SYSTEM_ENABLED", os.getenv("EBOOK_READER_ENABLED", "True")).lower() == "true"
 EBOOK_WEB_READER_ENABLED = os.getenv("EBOOK_WEB_READER_ENABLED", os.getenv("EBOOK_READER_ENABLED", "True")).lower() == "true"
 EBOOK_MOBILE_READER_ENABLED = os.getenv("EBOOK_MOBILE_READER_ENABLED", "True").lower() == "true"
+EBOOK_READER_ADMIN_ENABLED = os.getenv("EBOOK_READER_ADMIN_ENABLED", "False").lower() == "true"
 EBOOK_READER_STAFF_ONLY = os.getenv("EBOOK_READER_STAFF_ONLY", "True").lower() == "true"
 EBOOK_PROCESSING_ENABLED = os.getenv("EBOOK_PROCESSING_ENABLED", "True").lower() == "true"
 EBOOK_READER_ENABLED = EBOOK_SYSTEM_ENABLED and EBOOK_WEB_READER_ENABLED

@@ -115,7 +115,7 @@ class AudioSpeakerListView(APIView):
         speaker_rows = (
             queryset.exclude(speaker_ref=None)
             .values("speaker_ref_id", "speaker_ref__name")
-            .distinct()
+            .annotate(audio_count=Count("id"))
             .order_by("speaker_ref__name")
         )
         speakers = []
@@ -127,24 +127,25 @@ class AudioSpeakerListView(APIView):
                 {
                     "id": row["speaker_ref_id"],
                     "name": speaker_name,
-                    "audio_count": queryset.filter(speaker_ref_id=row["speaker_ref_id"]).count(),
+                    "audio_count": row["audio_count"],
                 }
             )
 
         text_speaker_names = (
             queryset.exclude(speaker="")
-            .values_list("speaker", flat=True)
-            .distinct()
+            .values("speaker")
+            .annotate(audio_count=Count("id"))
             .order_by("speaker")
         )
-        for speaker in text_speaker_names:
+        for row in text_speaker_names:
+            speaker = row["speaker"]
             if speaker in used_names:
                 continue
             speakers.append(
                 {
                     "id": speaker,
                     "name": speaker,
-                    "audio_count": queryset.filter(speaker=speaker).count(),
+                    "audio_count": row["audio_count"],
                 }
             )
         return Response(speakers)
@@ -635,7 +636,7 @@ class AuthorMenuView(APIView):
         speaker_rows = (
             queryset.exclude(speaker_ref=None)
             .values("speaker_ref_id", "speaker_ref__name")
-            .distinct()
+            .annotate(count=Count("id"))
             .order_by("speaker_ref__name")
         )
         items = []
@@ -647,21 +648,22 @@ class AuthorMenuView(APIView):
                 {
                     "id": row["speaker_ref_id"],
                     "name": speaker_name,
-                    "count": queryset.filter(speaker_ref_id=row["speaker_ref_id"]).count(),
+                    "count": row["count"],
                     "type": "audio",
                     "category_slug": category_slug or "",
                 }
             )
 
-        text_speakers = queryset.exclude(speaker="").values_list("speaker", flat=True).distinct().order_by("speaker")
-        for speaker in text_speakers:
+        text_speakers = queryset.exclude(speaker="").values("speaker").annotate(count=Count("id")).order_by("speaker")
+        for row in text_speakers:
+            speaker = row["speaker"]
             if speaker in used_names:
                 continue
             items.append(
                 {
                     "id": speaker,
                     "name": speaker,
-                    "count": queryset.filter(speaker=speaker).count(),
+                    "count": row["count"],
                     "type": "audio",
                     "category_slug": category_slug or "",
                 }

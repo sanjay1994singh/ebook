@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 
@@ -206,12 +207,19 @@ class Chapter(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="chapters")
     title = models.CharField(max_length=220)
     order = models.PositiveIntegerField(default=0)
+    start_page = models.PositiveIntegerField(null=True, blank=True)
+    end_page = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ("order", "id")
         indexes = [
             models.Index(fields=["book", "order", "id"], name="chap_book_order_idx"),
+            models.Index(fields=["book", "start_page", "end_page"], name="chap_book_page_range_idx"),
         ]
+
+    def clean(self):
+        if self.start_page and self.end_page and self.end_page < self.start_page:
+            raise ValidationError({"end_page": "End page must be greater than or equal to start page."})
 
     def __str__(self):
         return f"{self.book.title} - {self.title}"

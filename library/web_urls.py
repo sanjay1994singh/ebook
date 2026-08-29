@@ -4,6 +4,7 @@ from . import web_views
 
 urlpatterns = [
     path("", web_views.web_home, name="web_home"),
+    path("app-download/", web_views.web_app_download, name="web_app_download"),
     path("web/books/", web_views.web_book_list, name="web_book_list"),
     path("web/patrika/", web_views.web_patrika_list, name="web_patrika_list"),
     path("web/patrika/<slug:slug>/", web_views.web_patrika_issue_list, name="web_patrika_issue_list"),
@@ -13,4 +14,9 @@ urlpatterns = [
     path("web/chapters/<int:chapter_id>/start/", web_views.web_chapter_start, name="web_chapter_start"),
     path("web/reader/<int:page_id>/", web_views.web_reader_page, name="web_reader_page"),
     path("web/reader/<int:page_id>/data/", web_views.web_reader_page_data, name="web_reader_page_data"),
+    path("privacy-policy/", web_views.web_privacy_policy, name="web_privacy_policy"),
+    path("terms-conditions/", web_views.web_terms_conditions, name="web_terms_conditions"),
+    path("data-safety/", web_views.web_data_safety, name="web_data_safety"),
+    path("support/", web_views.web_support, name="web_support"),
+    path("account-deletion/", web_views.web_account_deletion, name="web_account_deletion"),
 ]

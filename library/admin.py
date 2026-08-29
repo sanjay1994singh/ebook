@@ -37,6 +37,7 @@ from .pdf_importer import extract_pdf_to_book
 
 class ChapterInline(admin.TabularInline):
     model = Chapter
+    fields = ("title", "order", "start_page", "end_page")
     extra = 1
 
 
@@ -352,8 +353,10 @@ class BookAdmin(admin.ModelAdmin):
 
 @admin.register(Chapter)
 class ChapterAdmin(admin.ModelAdmin):
-    list_display = ("title", "book", "order")
+    list_display = ("title", "book", "order", "start_page", "end_page")
     list_filter = ("book",)
+    search_fields = ("title", "book__title")
+    fields = ("book", "title", "order", "start_page", "end_page")
     inlines = [BookPageInline]
 
 

@@ -6,6 +6,20 @@
 {% block body %}
 {% include "library/web/partials/site_header.html" %}
 
+<section class="app-download-strip">
+  <div>
+    <strong>निकुंज रस मोबाइल ऐप</strong>
+    <span>
+      {% if latest_app_release %}
+        Latest version {{ latest_app_release.version_name }} ready hai.
+      {% else %}
+        Latest Android app download.
+      {% endif %}
+    </span>
+  </div>
+  <a class="app-download-button" href="{% url 'web_app_download' %}" download="release.apk">App Download</a>
+</section>
+
 {% if home_banners %}
   <section class="web-banner-ad" data-banner-slider>
     <button class="web-banner-arrow web-banner-prev" type="button" aria-label="Previous banner">‹</button>
@@ -55,7 +69,7 @@
   <a class="all-books-button" href="{% url 'web_book_list' %}">सभी ई - पुस्तकें देखें</a>
 </main>
 
-<section class="about-contact-band">
+<section class="about-contact-band" id="parichay">
   <div class="about-contact-inner">
     <section>
       <h2 class="landing-section-title">निकुंज रस</h2>
@@ -92,33 +106,7 @@
   </div>
 </section>
 
-<footer class="site-footer">
-  <div class="footer-inner">
-    <section>
-      <h3>महत्वपूर्ण पोर्टल</h3>
-      <p>अखिल भारतीय सेवाएं</p>
-      <p>श्री हरिदासीय परम्परा</p>
-      <p>श्री धाम वृन्दावन</p>
-    </section>
-    <section>
-      <h3>विषय</h3>
-      <p>ई - पुस्तकें</p>
-      <p>प्रवचन</p>
-      <p>दैनिक सत्संग</p>
-      <p>अमृत वचन</p>
-    </section>
-    <section>
-      <h3>हमारी वीडियो</h3>
-      <p>संकीर्तन लीला</p>
-      <p>उपदेश की बातें</p>
-      <p>नाम जप</p>
-    </section>
-    <section>
-      <h3>App</h3>
-      <div class="qr-box" aria-label="QR code"></div>
-    </section>
-  </div>
-</footer>
+{% include "library/web/partials/site_footer.html" %}
 
 {% if home_banners %}
   <script>

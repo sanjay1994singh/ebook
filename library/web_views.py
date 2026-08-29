@@ -1,9 +1,10 @@
 from django.db.models import Prefetch, Q
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from app_updates.models import AppBuildRelease
 from banners.models import Banner
 from ebook_reader.models import EbookDocument
 from ebook_reader.views import user_can_preview_reader
@@ -19,6 +20,7 @@ def _paginate_queryset(request, queryset, per_page):
 
 def web_home(request):
     """Website home page: featured books, intro, contact aur footer dikhata hai."""
+    latest_app_release = _latest_app_release()
     home_banners = (
         Banner.objects.filter(is_published=True, device__in=[Banner.DEVICE_ALL, Banner.DEVICE_DESKTOP])
         .exclude(desktop_image="")
@@ -39,8 +41,47 @@ def web_home(request):
             "books": books,
             "categories": categories,
             "home_banners": home_banners,
+            "latest_app_release": latest_app_release,
         },
     )
+
+
+def _latest_app_release():
+    return (
+        AppBuildRelease.objects.filter(
+            platform=AppBuildRelease.PLATFORM_ANDROID,
+            channel=AppBuildRelease.CHANNEL_TESTING,
+            is_active=True,
+            rollout_percent__gt=0,
+        )
+        .order_by("-version_code", "-created_at")
+        .first()
+    )
+
+
+def _app_release_url(request, release):
+    if release.artifact_file:
+        return request.build_absolute_uri(release.artifact_file.url)
+    return release.artifact_url or release.play_store_url
+
+
+def web_app_download(request):
+    """Website ka fixed latest APK download URL."""
+    latest_app_release = _latest_app_release()
+    if not latest_app_release:
+        raise Http404("Latest app release not available.")
+    if latest_app_release.artifact_file:
+        version_name = str(latest_app_release.version_name or "latest").replace(" ", "-")
+        download_filename = f"nikunj-ras-{version_name}-code-{latest_app_release.version_code}.apk"
+        return FileResponse(
+            latest_app_release.artifact_file.open("rb"),
+            as_attachment=True,
+            filename=download_filename,
+        )
+    download_url = _app_release_url(request, latest_app_release)
+    if not download_url:
+        raise Http404("Latest app download URL not available.")
+    return redirect(download_url)
 
 
 def web_book_list(request):
@@ -364,3 +405,99 @@ def web_reader_page_data(request, page_id):
     response = JsonResponse(_reader_payload(request, context))
     response["Cache-Control"] = "public, max-age=300"
     return response
+
+
+def _legal_context(title, sections):
+    return {
+        "title": title,
+        "support_email": "support@nikunjras.com",
+        "updated_on": "August 26, 2026",
+        "sections": [{"heading": heading, "body": body} for heading, body in sections],
+    }
+
+
+def web_privacy_policy(request):
+    """Google Play listing ke liye public, non-PDF Privacy Policy page."""
+    return render(
+        request,
+        "library/web/legal_page.html",
+        _legal_context(
+            "Privacy Policy",
+            [
+                ("Developer and contact", "Nikunj Ras is a spiritual ebook, audio, video and devotional content app. Privacy questions can be sent to support@nikunjras.com."),
+                ("Data we collect", "The app may collect a generated device ID, name, mobile number, email address, contact messages, profile language, ratings, reviews, reading activity and app usage needed to provide library, support, feedback, caching and account features."),
+                ("How data is used", "Data is used to show content, save profile details, answer support requests, store ratings, improve the service, remember reading progress and provide offline cache."),
+                ("Sharing", "We do not sell personal data. Data may be processed by hosting, backend, storage and content delivery providers only for operating the app and website."),
+                ("Security", "The app uses HTTPS for backend communication and stores cached content in app-private storage."),
+                ("Retention and deletion", "Support messages, profile data, ratings and device identifiers are kept only as long as needed for app operation, support and legal requirements. Users can request deletion at support@nikunjras.com."),
+                ("Children", "The app is intended for a general devotional audience and is not designed to knowingly collect personal data from children."),
+            ],
+        ),
+    )
+
+
+def web_terms_conditions(request):
+    """Public Terms and Conditions page."""
+    return render(
+        request,
+        "library/web/legal_page.html",
+        _legal_context(
+            "Terms & Conditions",
+            [
+                ("Use of the app", "Use this app for lawful personal reading, listening and devotional learning. Do not misuse, copy, scrape, attack, overload or interfere with the app or backend services."),
+                ("Content", "Books, audio, video, quotes and related content are provided for spiritual and educational use. Availability can change based on rights, technical needs or service updates."),
+                ("User submissions", "When you submit contact messages, ratings or profile details, you confirm that the information is accurate and does not violate anyone's rights."),
+                ("No harmful use", "You may not use the app to upload illegal content, harass others, attempt unauthorized access or violate applicable laws."),
+                ("Changes", "Features and terms may be updated. Continued use after updates means you accept the updated terms."),
+            ],
+        ),
+    )
+
+
+def web_data_safety(request):
+    """Public data safety page for app users and store review links."""
+    return render(
+        request,
+        "library/web/legal_page.html",
+        _legal_context(
+            "Data Safety",
+            [
+                ("Collected data", "The app may collect profile details, contact messages, device identifiers, ratings, reviews, reading activity and app usage needed for account, library, support and update features."),
+                ("Purpose", "Data is used to run the library service, provide support, save user preferences, improve reliability and deliver app updates."),
+                ("Sharing", "We do not sell personal data. Data may be processed by trusted hosting, storage, analytics or delivery providers only for operating Nikunj Ras."),
+                ("Security and deletion", "The app uses HTTPS and app-private storage for cached content. Users can request account or data deletion from the Account/Data Deletion page or by emailing support@nikunjras.com."),
+            ],
+        ),
+    )
+
+
+def web_support(request):
+    """Public support page for store listing and app users."""
+    return render(
+        request,
+        "library/web/legal_page.html",
+        _legal_context(
+            "Support",
+            [
+                ("Contact", "For support, feedback, content questions or privacy requests, email support@nikunjras.com."),
+                ("App help", "Please include your device model, app version, affected book/audio/video name and screenshots if possible."),
+                ("Response time", "Support requests are normally reviewed within 7 business days."),
+            ],
+        ),
+    )
+
+
+def web_account_deletion(request):
+    """Public account/data deletion instruction page."""
+    return render(
+        request,
+        "library/web/legal_page.html",
+        _legal_context(
+            "Account & Data Deletion",
+            [
+                ("How to request deletion", "Send a deletion request to support@nikunjras.com with your name, mobile number or email used in the app. If available, include your device ID from the app profile."),
+                ("What is deleted", "We will delete or anonymize profile details, contact messages, ratings, reviews and reading progress associated with the verified request, unless retention is legally required."),
+                ("Timeline", "Deletion requests are normally processed within 30 days after verification."),
+            ],
+        ),
+    )

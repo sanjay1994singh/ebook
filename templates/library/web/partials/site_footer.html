@@ -1,0 +1,33 @@
+<footer class="site-footer">
+  <div class="footer-inner">
+    <section>
+      <h3>मुख्य लिंक</h3>
+      <a href="{% url 'web_home' %}">होम</a>
+      <a href="{% url 'web_home' %}#parichay">परिचय</a>
+      <a href="{% url 'web_book_list' %}">ई - पुस्तकें</a>
+      <a href="{% url 'web_patrika_list' %}">पत्रिकाएं</a>
+      <a href="{% url 'web_audio_list' %}">ऑडियो</a>
+      <a href="{% url 'web_divine_quotes' %}">अमृत वचन</a>
+    </section>
+    <section>
+      <h3>महत्वपूर्ण पेज</h3>
+      <a href="{% url 'web_privacy_policy' %}">Privacy Policy</a>
+      <a href="{% url 'web_terms_conditions' %}">Terms &amp; Conditions</a>
+      <a href="{% url 'web_data_safety' %}">Data Safety</a>
+      <a href="{% url 'web_account_deletion' %}">Account/Data Deletion</a>
+      <a href="{% url 'web_support' %}">Support</a>
+    </section>
+    <section>
+      <h3>ऐप</h3>
+      <a href="{% url 'web_app_download' %}" download="release.apk">Latest App Download</a>
+      <a href="{% url 'web_support' %}">App Support</a>
+      <a href="{% url 'web_account_deletion' %}">Delete Account/Data</a>
+    </section>
+    <section>
+      <h3>सम्पर्क</h3>
+      <a href="mailto:support@nikunjras.com">support@nikunjras.com</a>
+      <a href="{% url 'web_support' %}">Help &amp; Feedback</a>
+      <p>Nikunj Ras devotional library</p>
+    </section>
+  </div>
+</footer>

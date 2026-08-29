@@ -9,6 +9,7 @@ urlpatterns = [
     path("ebooks/", include("ebook_reader.urls")),
     path("", include("library.web_urls")),
     path("api/auth/", include("accounts.urls")),
+    path("api/app-updates/", include("app_updates.urls")),
     path("api/audio/", include("library.audio_urls")),
     path("api/banners/", include("banners.urls")),
     path("api/books/", include("library.urls")),

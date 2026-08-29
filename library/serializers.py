@@ -200,7 +200,7 @@ class ChapterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Chapter
-        fields = ("id", "book", "title", "order", "page_count")
+        fields = ("id", "book", "title", "order", "start_page", "end_page", "page_count")
 
 
 class BookPageSerializer(serializers.ModelSerializer):
