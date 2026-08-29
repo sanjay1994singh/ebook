@@ -222,7 +222,17 @@ class ChapterPageListView(generics.ListAPIView):
     serializer_class = BookPageListSerializer
 
     def get_queryset(self):
-        return BookPage.objects.filter(chapter_id=self.kwargs["chapter_id"])
+        chapter = generics.get_object_or_404(
+            Chapter.objects.select_related("book"),
+            id=self.kwargs["chapter_id"],
+            book__is_published=True,
+        )
+        pages = BookPage.objects.filter(chapter_id=chapter.id)
+        if chapter.start_page:
+            pages = BookPage.objects.filter(chapter__book=chapter.book, page_number__gte=chapter.start_page)
+            if chapter.end_page:
+                pages = pages.filter(page_number__lte=chapter.end_page)
+        return pages.order_by("page_number", "id")
 
 
 class FavoriteListCreateView(generics.ListCreateAPIView):
