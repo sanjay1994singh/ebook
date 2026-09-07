@@ -11,6 +11,27 @@
   const storage = { get(k){try{return localStorage.getItem(k);}catch{return null;}}, set(k,v){try{localStorage.setItem(k,v);}catch{}} };
   const progressKey = `content-progress-${cfg.book}`;
   const svg = (tag, attrs={}) => {const el=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));return el;};
+  function shapingLayout(source){
+    const layout=JSON.parse(JSON.stringify(source));
+    for(const line of layout.lines){
+      const joined=[];
+      for(const run of line.runs){
+        const previous=joined[joined.length-1];
+        // PDF drop capitals can split a Hindi syllable across differently sized
+        // spans. Shape touching word fragments together, not as isolated SVG text.
+        if(previous&&previous.source_text&&run.source_text&&previous.font===run.font&&
+          Math.abs(previous.origin[1]-run.origin[1])<1&&Math.abs(run.bbox[0]-previous.bbox[2])<1&&
+          !/\s$/.test(previous.text)&&!/^\s/.test(run.text)){
+          previous.text=(previous.text+run.text).replace(/अा/g,'आ').normalize('NFC');
+          previous.source_text+=run.source_text;
+          previous.bbox=[previous.bbox[0],Math.min(previous.bbox[1],run.bbox[1]),run.bbox[2],Math.max(previous.bbox[3],run.bbox[3])];
+          previous.size=run.size;
+        }else joined.push(run);
+      }
+      line.runs=joined;
+    }
+    return layout;
+  }
   async function fonts(layout) {
     const map = {};
     for (const [key, spec] of Object.entries(layout.fonts || {})) {
@@ -32,7 +53,7 @@
   async function render() {
     if (!payload) return;
     const currentPayload = payload;
-    const layout = payload.layout, names = await fonts(layout);
+    const layout = shapingLayout(payload.layout), names = await fonts(layout);
     if (currentPayload !== payload) return;
     const host=$('page-host'); host.replaceChildren();
     if ($('mode').value === 'flow') {
