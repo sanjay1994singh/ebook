@@ -56,17 +56,13 @@ class StructuredContentTests(TestCase):
         edition.pages.update(reviewed_at=timezone.now(), reviewed_by=self.staff)
         return publish_edition(edition.pk)
 
-    def test_extract_preserves_sizes_positions_and_drawings_without_page_image(self):
+    def test_extract_preserves_sizes_positions_without_images_or_borders(self):
         with fitz.open(stream=source_pdf(), filetype="pdf") as doc:
             layout, method, issues = extract_page(doc, doc[0])
         self.assertEqual(method, "embedded")
         self.assertEqual([r["size"] for line in layout["lines"] for r in line["runs"]], [26, 16, 16])
         self.assertEqual(layout["lines"][2]["runs"][0]["origin"], [100, 145])
-        import base64
-        decoration = base64.b64decode(layout["decoration"].split(",", 1)[1]).decode()
-        self.assertNotIn("A book heading", decoration)
-        self.assertIn("path", decoration)
-        self.assertNotIn("data:image/png", decoration)
+        self.assertEqual(layout["decoration"], "")
         validate_layout(layout)
 
     def test_upload_is_idempotent_and_source_is_snapshot(self):

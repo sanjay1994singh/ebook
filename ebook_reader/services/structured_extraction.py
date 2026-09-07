@@ -148,10 +148,7 @@ def extract_page(document, page):
         return {
             "schema_version": 1, "width": round(page.rect.width, 3), "height": round(page.rect.height, 3),
             "fonts": fonts, "lines": lines,
-            "decoration": decoration_svg(page, omit_images=bool(large_images), text_images=[
-                (b["width"], b["height"]) for b in raw["blocks"] if b.get("type") == 1 and not border_image(b, page.rect)
-                and any(overlap(line["bbox"], b["bbox"]) > .45 for line in lines)
-            ]),
+            "decoration": "",
         }, method, issues
     finally:
         page.set_rotation(original_rotation)

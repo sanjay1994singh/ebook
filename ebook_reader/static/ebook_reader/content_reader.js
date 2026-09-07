@@ -50,15 +50,25 @@
     const paper=document.createElement('div');paper.className='paper';paper.style.width=`${width}px`;
     const canvas=svg('svg',{viewBox:`0 0 ${layout.width} ${layout.height}`,width:'100%',role:'document','aria-label':`${cfg.title}, पृष्ठ ${page}`});
     canvas.style.aspectRatio=`${layout.width} / ${layout.height}`;
-    if (/^data:image\/svg\+xml;base64,[A-Za-z0-9+/=]+$/.test(layout.decoration||'')) canvas.append(svg('image',{href:layout.decoration,width:layout.width,height:layout.height,class:'decoration','aria-hidden':'true'}));
+    // Text-only reader: ignore decoration even on previously extracted editions.
     for(const line of layout.lines) for(const run of line.runs){
       const node=svg('text',{x:run.origin[0],y:run.origin[1],'font-family':`${names[run.font]||'BookDevanagari'}, serif`,'font-size':run.size,'font-weight':run.bold?'700':'400','font-style':run.italic?'italic':'normal',fill:/^#[0-9a-f]{6}$/i.test(run.color||'')?run.color:'#000000'});
       node.textContent=run.text;
-      if ((run.confidence !== undefined || run.fit_source_width) && run.bbox[2]>run.bbox[0]) {node.setAttribute('textLength',run.bbox[2]-run.bbox[0]);node.setAttribute('lengthAdjust','spacingAndGlyphs');}
+      if(names[run.font]==='BookDevanagari' && layout.fonts[run.font]?.legacy)node.setAttribute('font-size',run.size*.82);
       if(run.underline)node.setAttribute('text-decoration','underline');
       canvas.append(node);
     }
     paper.append(canvas);host.append(paper);
+    // Preserve natural glyph proportions. Fit overly wide replacement text by
+    // reducing its size uniformly, never by stretching glyphs horizontally.
+    const runs=layout.lines.flatMap(line=>line.runs);
+    [...canvas.querySelectorAll('text')].forEach((node,index)=>{
+      const run=runs[index];
+      if(!(run.confidence!==undefined||run.fit_source_width))return;
+      const available=run.bbox[2]-run.bbox[0],measured=node.getComputedTextLength();
+      if(available>0&&measured>available)node.setAttribute('font-size',Number(node.getAttribute('font-size'))*available/measured);
+      if(available>0){node.setAttribute('x',(run.bbox[0]+run.bbox[2])/2);node.setAttribute('text-anchor','middle');}
+    });
     // A vertical scrollbar can reduce available width after the page is inserted.
     // Fit again once so the default zoom does not introduce a horizontal scrollbar.
     paper.style.width=`${Math.max(160,host.clientWidth-2)*zoom}px`;
