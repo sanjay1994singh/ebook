@@ -49,6 +49,8 @@ from .utils import extract_book_pages
 
 logger = logging.getLogger(__name__)
 
+from . import structured_admin  # noqa: F401, E402
+
 
 class IndexItemInline(admin.TabularInline):
     model = IndexItem

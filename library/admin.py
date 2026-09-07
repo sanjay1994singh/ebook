@@ -316,13 +316,23 @@ class BookAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("subjects",)
     inlines = [ChapterInline]
-    actions = ["extract_selected_pdfs", "create_ebook_documents_for_selected_books"]
+    actions = ["extract_selected_pdfs", "create_ebook_documents_for_selected_books", "extract_styled_content"]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if obj.pdf_file and obj.auto_extract_pdf and "pdf_file" in form.changed_data:
-            pages = extract_pdf_to_book(obj)
-            self.message_user(request, f"PDF imported successfully. {pages} pages created.")
+            from ebook_reader.services.structured_content import queue_content
+            edition = queue_content(obj)
+            self.message_user(request, format_html('Content extraction queued. <a href="{}">Review version {}</a> before publishing.', reverse("admin:ebook_reader_contentedition_change", args=[edition.pk]), edition.pk))
+
+    @admin.action(description="Extract styled content (new draft; preserves existing pages)")
+    def extract_styled_content(self, request, queryset):
+        from ebook_reader.services.structured_content import queue_content
+        count = 0
+        for book in queryset.exclude(pdf_file=""):
+            queue_content(book)
+            count += 1
+        self.message_user(request, f"Queued {count} books. Review Content editions before publishing.")
 
     @admin.action(description="Extract PDF pages for selected books")
     def extract_selected_pdfs(self, request, queryset):

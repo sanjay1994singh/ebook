@@ -4,6 +4,8 @@ from django.db import models
 from django.db.models import F, Q
 from ckeditor.fields import RichTextField
 
+from .structured_models import ContentEdition, ContentPage  # noqa: F401
+
 
 class Book(models.Model):
     class ProcessingStatus(models.TextChoices):

@@ -12,6 +12,12 @@ from ebook_reader.utils import extract_book_pages
 
 logger = logging.getLogger(__name__)
 
+
+@shared_task
+def process_content_edition(edition_id):
+    from ebook_reader.services.structured_content import process_edition
+    return process_edition(edition_id)
+
 TRANSIENT_PDF_ERROR_CODES = {"pdf_read_error"}
 
 

@@ -13,3 +13,4 @@ pypdf==5.1.0
 pypdfium2==4.30.0
 PyMuPDF==1.24.14
 pytesseract==0.3.13
+fonttools==4.64.0

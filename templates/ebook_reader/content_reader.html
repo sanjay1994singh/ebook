@@ -1,0 +1,54 @@
+{% load static %}
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ edition.book.title }} · पुस्तक</title>
+  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}">
+</head>
+<body class="{% if review %}review-mode{% endif %}">
+  <header class="toolbar">
+    <div class="book-title"><small>{% if review %}पृष्ठ समीक्षा · संस्करण {{ edition.pk }}{% elif draft_preview %}Draft preview · समीक्षा बाकी है{% else %}ई-पुस्तक{% endif %}</small><strong>{{ edition.book.title }}</strong></div>
+    {% if review %}<a id="reader-preview" href="{% url 'ebook_reader:content_preview' edition.pk %}" target="_blank" rel="noopener">Reader preview</a>{% endif %}
+    <label class="compact">अध्याय <select id="chapter"><option value="">विषय सूची</option></select></label>
+    <label class="compact">दृश्य <select id="mode"><option value="fixed">मूल पृष्ठ की तरह</option><option value="flow">आराम से पढ़ें</option></select></label>
+    <button id="smaller" aria-label="Zoom out">A−</button><button id="larger" aria-label="Zoom in">A+</button>
+    <label><select id="theme" aria-label="Theme"><option value="light">उजला</option><option value="sepia">सेपिया</option><option value="dark">रात्रि</option></select></label>
+  </header>
+  <nav class="navigation">
+    <button id="previous">← पिछला</button>
+    <label>पृष्ठ <input id="page-number" type="number" min="1" max="{{ edition.total_pages }}" value="1"> / {{ edition.total_pages }}</label>
+    <button id="next">अगला →</button>
+    <form id="search-form"><input id="query" type="search" placeholder="पुस्तक में खोजें" aria-label="Search book"><button>खोजें</button></form>
+  </nav>
+  {% if review %}
+  <section class="review-progress" aria-label="पुस्तक की समीक्षा">
+    <strong id="review-count">समीक्षा लोड हो रही है…</strong>
+    <progress id="review-progress" max="{{ edition.total_pages }}" value="0" aria-label="Approved pages"></progress>
+    <button id="next-pending">अगला बिना जाँचा पृष्ठ →</button>
+    <label><input id="sync-scroll" type="checkbox" checked> दोनों पृष्ठ साथ scroll करें</label>
+    <details><summary>सभी पृष्ठ</summary><div id="page-map" aria-label="पृष्ठ समीक्षा स्थिति"></div></details>
+  </section>
+  {% endif %}
+  <div id="status" role="status" aria-live="polite"></div>
+  <div id="results" hidden></div>
+  <main class="workspace">
+    {% if review %}<section class="source-pane"><h2>मूल PDF · केवल तुलना के लिए</h2><div id="source-host"><img id="source" alt="Original source page"></div></section>{% endif %}
+    <section class="content-pane"><h2>{% if review %}निकाला गया text और layout{% else %}पुस्तक का पृष्ठ{% endif %}</h2><div id="page-host"></div></section>
+  </main>
+  {% if review %}
+  <section class="editor-panel">
+    <div class="review-heading"><h2>पाठ और शैली सुधारें</h2><strong id="review-state"></strong></div>
+    <p>मूल से शब्द, मात्राएँ, पंक्तियाँ, शीर्षक, borders और font का रूप मिलाएँ। OCR confidence शुद्धता की guarantee नहीं है।</p>
+    <details><summary>Extraction जाँच के संकेत</summary><ul id="issues"></ul></details>
+    <div id="line-editor"></div>
+    <details><summary>Advanced: lines / runs / coordinates JSON</summary><textarea id="geometry" spellcheck="false"></textarea><button id="apply-geometry" type="button">Apply geometry to preview</button></details>
+    <label class="approval"><input id="approve" type="checkbox"> मैंने इस पृष्ठ के text और layout को मूल से मिलाकर जाँचा है।</label>
+    <div class="review-actions"><button id="save">सुधार सुरक्षित करें</button><button id="save-next">सुरक्षित करके अगला पृष्ठ</button><button id="publish">पूरी reviewed पुस्तक publish करें</button></div>
+  </section>
+  <form hidden>{% csrf_token %}</form>
+  {% endif %}
+  {{ reader_config|json_script:"reader-config" }}
+  <script src="{% static 'ebook_reader/content_reader.js' %}" defer></script>
+</body>
+</html>

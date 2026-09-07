@@ -42,7 +42,10 @@
         <div class="book-progress"><span></span></div>
 
         <div class="detail-actions">
-          {% if first_page %}
+          {% if content_reader_url %}
+            <a href="{{ content_reader_url }}?page=1">प्रारंभ से पढ़ें</a>
+            <a href="{{ content_reader_url }}">पढ़ना जारी रखें</a>
+          {% elif first_page %}
             <a href="{% url 'web_reader_page' first_page.id %}">प्रारंभ से पढ़ें</a>
             <a href="{% url 'web_reader_page' first_page.id %}">पढ़ना जारी रखें</a>
           {% else %}

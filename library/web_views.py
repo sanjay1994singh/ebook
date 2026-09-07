@@ -268,6 +268,8 @@ def web_divine_quotes(request):
 def web_book_detail(request, slug):
     """Ek book ka detail page aur vishay suchi dikhata hai."""
     book = get_object_or_404(Book.objects.select_related("category"), slug=slug, is_published=True)
+    from ebook_reader.structured_views import published_edition
+    content_edition = published_edition(book.pk)
     ebook_document = EbookDocument.objects.filter(book=book).first()
     new_reader_preview_url = None
     if ebook_document and user_can_preview_reader(request, ebook_document):
@@ -287,6 +289,7 @@ def web_book_detail(request, slug):
             "chapters": chapters,
             "first_page": first_page,
             "new_reader_preview_url": new_reader_preview_url,
+            "content_reader_url": reverse("ebook_reader:content_reader", args=[book.pk]) if content_edition else None,
         },
     )
 
@@ -294,6 +297,10 @@ def web_book_detail(request, slug):
 def web_chapter_start(request, chapter_id):
     """Chapter par click karne par us chapter ke first page par bhejta hai."""
     chapter = get_object_or_404(Chapter.objects.select_related("book"), id=chapter_id)
+    from ebook_reader.structured_views import published_edition
+    if published_edition(chapter.book_id):
+        url = reverse("ebook_reader:content_reader", args=[chapter.book_id])
+        return redirect(f"{url}?page={chapter.start_page or 1}")
     first_page = chapter.pages.order_by("page_number", "id").first()
     if first_page:
         return redirect("web_reader_page", page_id=first_page.id)
