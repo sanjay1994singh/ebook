@@ -30,6 +30,23 @@ def source_pdf():
 
 
 class StructuredContentTests(TestCase):
+    def test_direct_publish_is_explicit_and_does_not_fake_page_review(self):
+        edition = self.draft()
+        self.client.force_login(self.staff)
+        url = reverse("ebook_reader:content_publish", args=[edition.pk])
+        self.assertEqual(self.client.post(url, "{}", content_type="application/json").status_code, 400)
+        self.assertEqual(self.client.post(url, '{"allow_unreviewed":true}', content_type="application/json").status_code, 200)
+        edition.refresh_from_db()
+        self.assertEqual(edition.status, "published")
+        self.assertIsNone(edition.pages.first().reviewed_at)
+
+    def test_direct_publish_still_rejects_missing_pages(self):
+        edition = self.draft()
+        edition.total_pages = 2
+        edition.save()
+        with self.assertRaises(ValidationError):
+            publish_edition(edition.pk, allow_unreviewed=True)
+
     def test_embedded_bold_face_is_used_when_pdf_span_flags_are_missing(self):
         fonts = {"F1": {"style": " Bold"}, "F2": {"style": "Regular"}}
         self.assertTrue(run_emphasis({"font": "F1", "flags": 0}, fonts)["bold"])

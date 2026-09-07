@@ -44,7 +44,8 @@
     <div id="line-editor"></div>
     <details><summary>Advanced: lines / runs / coordinates JSON</summary><textarea id="geometry" spellcheck="false"></textarea><button id="apply-geometry" type="button">Apply geometry to preview</button></details>
     <label class="approval"><input id="approve" type="checkbox"> मैंने इस पृष्ठ के text और layout को मूल से मिलाकर जाँचा है।</label>
-    <div class="review-actions"><button id="save">सुधार सुरक्षित करें</button><button id="save-next">सुरक्षित करके अगला पृष्ठ</button><button id="publish">पूरी reviewed पुस्तक publish करें</button></div>
+    <div class="review-actions"><button id="save">सुधार सुरक्षित करें</button><button id="save-next">सुरक्षित करके अगला पृष्ठ</button><button id="publish">पूरी reviewed पुस्तक publish करें</button><button id="publish-direct">बिना सभी pages जाँचे सीधे publish करें</button></div>
+    <p>सीधे publish करने पर बिना जाँचे pages भी उपलब्ध होंगे; उनकी review स्थिति नहीं बदलेगी। पुस्तक की Library entry में Is published भी चालू होना चाहिए।</p>
   </section>
   <form hidden>{% csrf_token %}</form>
   {% endif %}

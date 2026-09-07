@@ -113,7 +113,7 @@
       $('line-editor').append(row);
     }));
     $('geometry').value=JSON.stringify(payload.layout.lines,null,2);
-    for(const id of ['save','save-next','approve','geometry','apply-geometry','publish'])$(id).disabled=!cfg.editable;
+    for(const id of ['save','save-next','approve','geometry','apply-geometry','publish','publish-direct'])$(id).disabled=!cfg.editable;
   }
   function reviewProgress(){
     if(!cfg.review||!payload?.review_summary)return;
@@ -191,6 +191,12 @@
     $('save').onclick=()=>save();$('save-next').onclick=()=>save(true);$('approve').onchange=()=>{dirty=true;};
     $('apply-geometry').onclick=()=>{try{const lines=JSON.parse($('geometry').value);if(!Array.isArray(lines)||lines.some(l=>!Array.isArray(l.runs)||l.runs.some(r=>typeof r.text!=='string'||!Array.isArray(r.origin)||!Array.isArray(r.bbox)||!(r.size>0))))throw new Error('Invalid lines/runs JSON');payload.layout.lines=lines;markDirty();editor();render();}catch(error){status(error.message);}};
     $('publish').onclick=async()=>{if(dirty){status('पहले इस पृष्ठ के बदलाव सुरक्षित करें।');return;}try{await post(cfg.publish_url,{});cfg.editable=false;editor();status('पुस्तक publish हो गई है। अब web और app में content reader उपलब्ध है।');}catch(error){status(error.message);}};
+    $('publish-direct').onclick=async()=>{
+      if(saving||dirty){status('पहले इस पृष्ठ के बदलाव सुरक्षित करें।');return;}
+      $('publish-direct').disabled=true;
+      try{await post(cfg.publish_url,{allow_unreviewed:true});cfg.editable=false;editor();status('पुस्तक सीधे publish हो गई है। Library → Books में Is published चालू रखें।');}
+      catch(error){status(error.message);$('publish-direct').disabled=!cfg.editable;}
+    };
   }
   window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
   let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(render,120);});

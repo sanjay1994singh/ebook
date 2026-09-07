@@ -80,7 +80,7 @@ def layout_text(layout):
     return "\n".join("".join(run["text"] for run in line["runs"]) for line in layout.get("lines", []))
 
 
-def publish_edition(edition_id):
+def publish_edition(edition_id, *, allow_unreviewed=False):
     with transaction.atomic():
         initial = ContentEdition.objects.get(pk=edition_id)
         type(initial.book).objects.select_for_update().get(pk=initial.book_id)
@@ -90,7 +90,7 @@ def publish_edition(edition_id):
             raise ValidationError("Only a reviewed draft can be published.")
         if not edition.total_pages or [p.page_number for p in pages] != list(range(1, edition.total_pages + 1)):
             raise ValidationError("Every source page must be present.")
-        if any(not p.reviewed_at for p in pages):
+        if not allow_unreviewed and any(not p.reviewed_at for p in pages):
             raise ValidationError("Review and approve every page before publishing.")
         from .structured_extraction import validate_layout
         for page in pages:

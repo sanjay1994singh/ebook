@@ -182,7 +182,12 @@ def publish(request, edition_id):
     if not request.user.has_perm("ebook_reader.change_contentedition"):
         raise PermissionDenied
     try:
-        edition = publish_edition(edition_id)
+        payload = json.loads(request.body or b"{}")
+        if not isinstance(payload, dict):
+            return _response({"error": "Invalid publication request."}, 400)
+        edition = publish_edition(edition_id, allow_unreviewed=payload.get("allow_unreviewed") is True)
         return _response({"published": True, "url": reverse("ebook_reader:content_reader", args=[edition.book_id])})
+    except (ValueError, TypeError) as error:
+        return _response({"error": "Invalid publication request."}, 400)
     except ValidationError as error:
         return _response({"error": " ".join(error.messages)}, 400)
