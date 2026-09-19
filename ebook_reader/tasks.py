@@ -228,3 +228,21 @@ def detect_ebook_toc_document(self, ebook_document_id):
         "failed": result.failed,
         "skipped": result.skipped,
     }
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(DatabaseError,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+)
+def prepare_ebook_index_for_book(self, book_id, replace_chapters=False):
+    from ebook_reader.services.index_preparation import prepare_book_index
+    from library.models import Book as LibraryBook
+
+    try:
+        book = LibraryBook.objects.get(id=book_id)
+    except LibraryBook.DoesNotExist:
+        return {"status": "missing_book", "book_id": book_id}
+    result = prepare_book_index(book, replace_chapters=replace_chapters)
+    return result.as_dict()

@@ -102,4 +102,15 @@ def publish_edition(edition_id, *, allow_unreviewed=False):
         edition.status = "published"
         edition.published_at = timezone.now()
         edition.save(update_fields=("status", "published_at"))
+        _sync_index_after_publish(edition)
         return edition
+
+
+def _sync_index_after_publish(edition):
+    try:
+        ebook_document = edition.book.ebook_document
+    except Exception:
+        return
+    from ebook_reader.services.index_sync import sync_lessons_to_book_chapters
+
+    sync_lessons_to_book_chapters(ebook_document, replace_existing=False)

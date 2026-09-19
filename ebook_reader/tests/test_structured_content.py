@@ -192,10 +192,11 @@ class StructuredContentTests(TestCase):
         request = RequestFactory().post("/"); request.user = self.staff
         model_admin = BookAdmin(Book, admin.site)
         self.book.auto_extract_pdf = True
-        with patch("ebook_reader.services.structured_content.queue_content") as queue, patch.object(model_admin, "message_user"), patch("library.admin.extract_pdf_to_book") as legacy:
+        with patch("ebook_reader.services.structured_content.queue_content") as queue, patch("ebook_reader.tasks.prepare_ebook_index_for_book.delay") as prepare_index, patch.object(model_admin, "message_user"), patch("library.admin.extract_pdf_to_book") as legacy:
             queue.return_value = Mock(pk=123)
             model_admin.save_model(request, self.book, Mock(changed_data=["pdf_file"]), True)
         queue.assert_called_once(); legacy.assert_not_called()
+        prepare_index.assert_called_once_with(self.book.pk)
 
     def test_krutidev_conversion_preserves_source_runs_and_braj_words(self):
         lines = [{"bbox": [1, 1, 200, 40], "runs": [{"text": "nwts Jh foiqy] fcgkjhnkl xkÅ¡ eSaA", "font": "F1", "size": 24, "origin": [1, 30], "bbox": [1, 1, 200, 40]}]}]

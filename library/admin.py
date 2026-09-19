@@ -316,7 +316,7 @@ class BookAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("subjects",)
     inlines = [ChapterInline]
-    actions = ["extract_selected_pdfs", "create_ebook_documents_for_selected_books", "extract_styled_content"]
+    actions = ["extract_selected_pdfs", "create_ebook_documents_for_selected_books", "extract_styled_content", "prepare_selected_indexes"]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -324,6 +324,13 @@ class BookAdmin(admin.ModelAdmin):
             from ebook_reader.services.structured_content import queue_content
             edition = queue_content(obj)
             self.message_user(request, format_html('Content extraction queued. <a href="{}">Review version {}</a> before publishing.', reverse("admin:ebook_reader_contentedition_change", args=[edition.pk]), edition.pk))
+            try:
+                from ebook_reader.tasks import prepare_ebook_index_for_book
+
+                prepare_ebook_index_for_book.delay(obj.pk)
+                self.message_user(request, "Vishay suchi/index preparation queued.", messages.SUCCESS)
+            except Exception as error:
+                self.message_user(request, f"Index preparation could not be queued: {error}", messages.WARNING)
 
     @admin.action(description="Extract styled content (new draft; preserves existing pages)")
     def extract_styled_content(self, request, queryset):
@@ -358,6 +365,25 @@ class BookAdmin(admin.ModelAdmin):
                 f"failed={summary.failed}."
             ),
             messages.SUCCESS if not summary.failed else messages.WARNING,
+        )
+
+    @admin.action(description="Prepare vishay suchi/index for selected books")
+    def prepare_selected_indexes(self, request, queryset):
+        from ebook_reader.services.index_preparation import prepare_book_index
+
+        ready = review_required = failed = 0
+        for book in queryset.exclude(pdf_file=""):
+            result = prepare_book_index(book, replace_chapters=False)
+            if result.status == "ready":
+                ready += 1
+            elif result.status == "failed":
+                failed += 1
+            else:
+                review_required += 1
+        self.message_user(
+            request,
+            f"Index preparation complete. ready={ready}, review_required={review_required}, failed={failed}.",
+            messages.SUCCESS if not failed else messages.WARNING,
         )
 
 
