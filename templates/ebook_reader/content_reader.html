@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ edition.book.title }} · पुस्तक</title>
-  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260919-reader-fullscreen-1">
+  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260919-reader-icons-1">
 </head>
 <body class="{% if review %}review-mode{% endif %}">
   <header class="toolbar reader-chrome">
@@ -13,8 +13,8 @@
       <label class="index-picker"><select id="chapter" aria-label="विषय सूची"><option value="">Index</option></select></label>
       <div class="book-title"><small>{% if review %}पृष्ठ समीक्षा · संस्करण {{ edition.pk }}{% elif draft_preview %}Draft preview · समीक्षा बाकी है{% else %}ई-पुस्तक{% endif %}</small><strong>{{ edition.book.title }}</strong></div>
       {% if review %}<a id="reader-preview" href="{% url 'ebook_reader:content_preview' edition.pk %}" target="_blank" rel="noopener">Preview</a>{% endif %}
-      <button class="icon-button" type="button" aria-label="Bookmark">♡</button>
-      <button class="icon-button" type="button" aria-label="विषय सूची">▤</button>
+      <button class="icon-button bookmark-button" id="bookmark-page" type="button" aria-label="Bookmark page" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5h10v16l-5-3.6-5 3.6z"/></svg></button>
+      <button class="icon-button" id="open-index" type="button" aria-label="विषय सूची खोलें"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h9a3 3 0 0 1 3 3v12a3 3 0 0 0-3-3H6z"/><path d="M6 4.5v12h9"/><path d="M9 8h5M9 11h5M9 14h3"/></svg></button>
       <button class="icon-button" id="close-reader" type="button" aria-label="Close">×</button>
     </div>
     <div id="current-title" class="current-title">{{ edition.book.title }}</div>
@@ -40,17 +40,18 @@
   </main>
   <footer class="reader-footer" aria-label="Reader controls">
     <div class="footer-nav">
-      <button id="previous" type="button" aria-label="Previous page">‹</button>
-      <button id="next" type="button" aria-label="Next page">›</button>
+      <button id="previous" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></button>
+      <button id="next" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
     </div>
-    <button class="footer-symbol" type="button" aria-label="Reader mode">♧</button>
+    <button class="footer-symbol" id="toggle-mode" type="button" aria-label="Reader mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-7"/><path d="M8.5 13.5C5.7 13.5 4 12 4 9.8 4 7.8 5.5 6.5 7.4 6.5c1.4 0 2.4.7 3 1.9V4h3.2v4.4c.6-1.2 1.6-1.9 3-1.9 1.9 0 3.4 1.3 3.4 3.3 0 2.2-1.7 3.7-4.5 3.7-1.6 0-2.7-.5-3.5-1.6-.8 1.1-1.9 1.6-3.5 1.6z"/><path d="M7 18h10"/></svg></button>
     <div class="footer-zoom">
-      <button id="smaller" type="button" aria-label="Zoom out">−</button>
+      <button id="smaller" type="button" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
       <span>Aa</span>
-      <button id="larger" type="button" aria-label="Zoom in">+</button>
+      <button id="larger" type="button" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg></button>
     </div>
-    <label class="theme-control"><select id="theme" aria-label="Theme"><option value="light">○</option><option value="sepia">◉</option><option value="dark">●</option></select></label>
-    <button id="refresh-page" type="button" aria-label="Refresh page">↻</button>
+    <label class="theme-control"><select id="theme" aria-label="Theme"><option value="light">उजला</option><option value="sepia">सेपिया</option><option value="dark">रात्रि</option></select></label>
+    <button id="theme-toggle" class="theme-icon" type="button" aria-label="Theme"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="5"/><circle cx="15" cy="9" r="5"/><circle cx="12" cy="15" r="5"/></svg></button>
+    <button id="refresh-page" type="button" aria-label="Refresh page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 7v5h-5"/><path d="M18.2 12A6.4 6.4 0 1 1 16.5 7.6L19 10"/></svg></button>
     <select id="mode" aria-label="दृश्य"><option value="fixed">मूल पृष्ठ की तरह</option><option value="flow">आराम से पढ़ें</option></select>
   </footer>
   {% if review %}
@@ -67,6 +68,6 @@
   <form hidden>{% csrf_token %}</form>
   {% endif %}
   {{ reader_config|json_script:"reader-config" }}
-  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260919-reader-fullscreen-1" defer></script>
+  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260919-reader-icons-1" defer></script>
 </body>
 </html>

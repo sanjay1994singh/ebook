@@ -10,6 +10,7 @@
   const url = (pattern, n) => pattern.replace('{page}', n);
   const storage = { get(k){try{return localStorage.getItem(k);}catch{return null;}}, set(k,v){try{localStorage.setItem(k,v);}catch{}} };
   const progressKey = `content-progress-${cfg.book}`;
+  const bookmarkKey = `content-bookmark-${cfg.book}`;
   const svg = (tag, attrs={}) => {const el=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));return el;};
   const withTimeout = (promise, ms=1200) => Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
   function shapingLayout(source){
@@ -146,6 +147,7 @@
       const data=await response.json();if(id!==requestId)return;
       payload=data;page=n;dirty=false;
       $('page-number').value=page;$('previous').disabled=page<=1;$('next').disabled=page>=cfg.total;
+      updateBookmark();
       syncChapterSelect();
       if(cfg.review){$('source').src=url(cfg.source_url,page);$('source-host').scrollTop=0;}
       editor();await render();if(id!==requestId)return;
@@ -177,6 +179,22 @@
   $('previous').onclick=()=>load(page-1);$('next').onclick=()=>load(page+1);$('page-number').onchange=e=>load(e.target.value);
   $('mode').onchange=()=>{zoom=1;render();};$('smaller').onclick=()=>{zoom=Math.max(.6,zoom-.15);render();};$('larger').onclick=()=>{zoom=Math.min(3,zoom+.15);render();};
   $('theme').onchange=e=>{document.body.dataset.theme=e.target.value;storage.set('content-theme',e.target.value);};$('theme').value=storage.get('content-theme')||'light';document.body.dataset.theme=$('theme').value;
+  function cycleTheme(){
+    const order=['light','sepia','dark'],next=order[(order.indexOf($('theme').value)+1)%order.length]||'light';
+    $('theme').value=next;$('theme').dispatchEvent(new Event('change'));
+  }
+  function updateBookmark(){
+    const button=$('bookmark-page');
+    if(!button)return;
+    button.setAttribute('aria-pressed', storage.get(bookmarkKey)===String(page)?'true':'false');
+  }
+  function toggleBookmark(){
+    const bookmarked=storage.get(bookmarkKey)===String(page);
+    storage.set(bookmarkKey, bookmarked?'':String(page));
+    updateBookmark();
+    status(bookmarked?'Bookmark हट गया।':'Bookmark सुरक्षित हो गया।');
+    setTimeout(()=>{if($('status').textContent.includes('Bookmark'))status('');},900);
+  }
   function chapterLabel(chapter){
     const title=chapter.title||'विषय';
     if(chapter.start_page&&chapter.end_page&&chapter.end_page!==chapter.start_page)return `${title} · पृष्ठ ${chapter.start_page}-${chapter.end_page}`;
@@ -193,9 +211,17 @@
   }
   for(const chapter of cfg.chapters){const option=document.createElement('option');option.value=chapter.start_page;option.textContent=chapterLabel(chapter);$('chapter').append(option);}$('chapter').onchange=e=>{if(e.target.value)load(e.target.value);};
   if($('refresh-page'))$('refresh-page').onclick=()=>load(page);
+  if($('theme-toggle'))$('theme-toggle').onclick=cycleTheme;
+  if($('toggle-mode'))$('toggle-mode').onclick=()=>{$('mode').value=$('mode').value==='fixed'?'flow':'fixed';$('mode').dispatchEvent(new Event('change'));};
+  if($('bookmark-page'))$('bookmark-page').onclick=toggleBookmark;
+  if($('open-index'))$('open-index').onclick=()=>{
+    const select=$('chapter');
+    select.focus();
+    if(typeof select.showPicker==='function')select.showPicker();
+  };
   if($('close-reader'))$('close-reader').onclick=()=>{
     if(window.ReactNativeWebView)window.ReactNativeWebView.postMessage(JSON.stringify({type:'content-close',edition:cfg.edition,page}));
-    if(history.length>1)history.back();
+    if(history.length>1)history.back(); else location.href='/ebooks/';
   };
   let searchId=0;
   $('search-form').onsubmit=async e=>{e.preventDefault();const id=++searchId;try{const response=await fetch(`${cfg.search_url}?q=${encodeURIComponent($('query').value)}`,{cache:'no-store'});if(!response.ok)throw new Error('खोज उपलब्ध नहीं है।');const data=await response.json();if(id!==searchId)return;$('results').replaceChildren();$('results').hidden=false;for(const hit of data.results){const button=document.createElement('button');button.textContent=`पृष्ठ ${hit.page} · ${hit.excerpt}`;button.onclick=()=>{load(hit.page);$('results').hidden=true;};$('results').append(button);}if(!data.results.length)$('results').textContent='कोई परिणाम नहीं मिला।';}catch(error){status(error.message);}};
