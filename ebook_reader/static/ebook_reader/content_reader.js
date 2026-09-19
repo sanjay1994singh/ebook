@@ -11,6 +11,7 @@
   const storage = { get(k){try{return localStorage.getItem(k);}catch{return null;}}, set(k,v){try{localStorage.setItem(k,v);}catch{}} };
   const progressKey = `content-progress-${cfg.book}`;
   const svg = (tag, attrs={}) => {const el=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));return el;};
+  const withTimeout = (promise, ms=1200) => Promise.race([promise, new Promise(resolve => setTimeout(resolve, ms))]);
   function shapingLayout(source){
     const layout=JSON.parse(JSON.stringify(source));
     for(const line of layout.lines){
@@ -41,13 +42,15 @@
         if (!fontCache.has(cacheKey)) {
           const family = `BookSource${fontCache.size}`;
           const face = new FontFace(family, `url(${spec.data})`);
-          fontCache.set(cacheKey, face.load().then(loaded => {document.fonts.add(loaded);return family;}).catch(() => 'BookDevanagari'));
+          fontCache.set(cacheKey, withTimeout(face.load()).then(loaded => {if(loaded&&document.fonts)document.fonts.add(loaded);return loaded?family:'BookDevanagari';}).catch(() => 'BookDevanagari'));
         }
         map[key] = await fontCache.get(cacheKey);
       } else map[key] = 'BookDevanagari';
     }
-    await document.fonts.load('20px BookDevanagari');
-    if(layout.lines.some(line=>line.runs.some(run=>run.bold)))await document.fonts.load('700 20px BookDevanagari');
+    if(document.fonts?.load){
+      await withTimeout(document.fonts.load('20px BookDevanagari'));
+      if(layout.lines.some(line=>line.runs.some(run=>run.bold)))await withTimeout(document.fonts.load('700 20px BookDevanagari'));
+    }
     return map;
   }
   async function render() {
