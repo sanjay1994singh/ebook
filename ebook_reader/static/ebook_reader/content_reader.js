@@ -183,11 +183,20 @@
     if(chapter.start_page)return `${title} · पृष्ठ ${chapter.start_page}`;
     return title;
   }
+  function activeChapter(){
+    return [...cfg.chapters].reverse().find(item=>Number(item.start_page||0)<=page);
+  }
   function syncChapterSelect(){
-    const chapter=[...cfg.chapters].reverse().find(item=>Number(item.start_page||0)<=page);
+    const chapter=activeChapter();
     if(chapter?.start_page)$('chapter').value=String(chapter.start_page);
+    if($('current-title'))$('current-title').textContent=chapter?.title||cfg.title||'ई-पुस्तक';
   }
   for(const chapter of cfg.chapters){const option=document.createElement('option');option.value=chapter.start_page;option.textContent=chapterLabel(chapter);$('chapter').append(option);}$('chapter').onchange=e=>{if(e.target.value)load(e.target.value);};
+  if($('refresh-page'))$('refresh-page').onclick=()=>load(page);
+  if($('close-reader'))$('close-reader').onclick=()=>{
+    if(window.ReactNativeWebView)window.ReactNativeWebView.postMessage(JSON.stringify({type:'content-close',edition:cfg.edition,page}));
+    if(history.length>1)history.back();
+  };
   let searchId=0;
   $('search-form').onsubmit=async e=>{e.preventDefault();const id=++searchId;try{const response=await fetch(`${cfg.search_url}?q=${encodeURIComponent($('query').value)}`,{cache:'no-store'});if(!response.ok)throw new Error('खोज उपलब्ध नहीं है।');const data=await response.json();if(id!==searchId)return;$('results').replaceChildren();$('results').hidden=false;for(const hit of data.results){const button=document.createElement('button');button.textContent=`पृष्ठ ${hit.page} · ${hit.excerpt}`;button.onclick=()=>{load(hit.page);$('results').hidden=true;};$('results').append(button);}if(!data.results.length)$('results').textContent='कोई परिणाम नहीं मिला।';}catch(error){status(error.message);}};
   if(cfg.review){
