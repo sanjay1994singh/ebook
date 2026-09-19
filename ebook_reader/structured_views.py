@@ -76,7 +76,13 @@ def _context(request, edition, *, review=False):
         "review_url": reverse("ebook_reader:content_review_save", args=[edition.pk, 1]).replace("/review/1/", "/review/{page}/"),
         "search_url": reverse("ebook_reader:content_search", args=[edition.pk]),
         "publish_url": reverse("ebook_reader:content_publish", args=[edition.pk]),
-        "chapters": list(edition.book.chapters.exclude(start_page=None).values("title", "start_page")),
+        "chapters": list(
+            edition.book.chapters.exclude(start_page=None).values(
+                "title",
+                "start_page",
+                "end_page",
+            )
+        ),
     }}
 
 

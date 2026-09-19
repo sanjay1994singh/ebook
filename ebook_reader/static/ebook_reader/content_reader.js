@@ -143,6 +143,7 @@
       const data=await response.json();if(id!==requestId)return;
       payload=data;page=n;dirty=false;
       $('page-number').value=page;$('previous').disabled=page<=1;$('next').disabled=page>=cfg.total;
+      syncChapterSelect();
       if(cfg.review){$('source').src=url(cfg.source_url,page);$('source-host').scrollTop=0;}
       editor();await render();if(id!==requestId)return;
       $('page-host').scrollTop=0;status('');
@@ -173,7 +174,17 @@
   $('previous').onclick=()=>load(page-1);$('next').onclick=()=>load(page+1);$('page-number').onchange=e=>load(e.target.value);
   $('mode').onchange=()=>{zoom=1;render();};$('smaller').onclick=()=>{zoom=Math.max(.6,zoom-.15);render();};$('larger').onclick=()=>{zoom=Math.min(3,zoom+.15);render();};
   $('theme').onchange=e=>{document.body.dataset.theme=e.target.value;storage.set('content-theme',e.target.value);};$('theme').value=storage.get('content-theme')||'light';document.body.dataset.theme=$('theme').value;
-  for(const chapter of cfg.chapters){const option=document.createElement('option');option.value=chapter.start_page;option.textContent=chapter.title;$('chapter').append(option);}$('chapter').onchange=e=>{if(e.target.value)load(e.target.value);};
+  function chapterLabel(chapter){
+    const title=chapter.title||'विषय';
+    if(chapter.start_page&&chapter.end_page&&chapter.end_page!==chapter.start_page)return `${title} · पृष्ठ ${chapter.start_page}-${chapter.end_page}`;
+    if(chapter.start_page)return `${title} · पृष्ठ ${chapter.start_page}`;
+    return title;
+  }
+  function syncChapterSelect(){
+    const chapter=[...cfg.chapters].reverse().find(item=>Number(item.start_page||0)<=page);
+    if(chapter?.start_page)$('chapter').value=String(chapter.start_page);
+  }
+  for(const chapter of cfg.chapters){const option=document.createElement('option');option.value=chapter.start_page;option.textContent=chapterLabel(chapter);$('chapter').append(option);}$('chapter').onchange=e=>{if(e.target.value)load(e.target.value);};
   let searchId=0;
   $('search-form').onsubmit=async e=>{e.preventDefault();const id=++searchId;try{const response=await fetch(`${cfg.search_url}?q=${encodeURIComponent($('query').value)}`,{cache:'no-store'});if(!response.ok)throw new Error('खोज उपलब्ध नहीं है।');const data=await response.json();if(id!==searchId)return;$('results').replaceChildren();$('results').hidden=false;for(const hit of data.results){const button=document.createElement('button');button.textContent=`पृष्ठ ${hit.page} · ${hit.excerpt}`;button.onclick=()=>{load(hit.page);$('results').hidden=true;};$('results').append(button);}if(!data.results.length)$('results').textContent='कोई परिणाम नहीं मिला।';}catch(error){status(error.message);}};
   if(cfg.review){
