@@ -68,6 +68,10 @@
       const base=sizes[Math.floor(sizes.length/2)]||18;
       for(const line of layout.lines){
         const row=document.createElement('p');row.className='flow-line';
+        const lineLeft=Math.min(...line.runs.map(run=>run.bbox?.[0]??run.origin?.[0]??0));
+        const lineRight=Math.max(...line.runs.map(run=>run.bbox?.[2]??run.origin?.[0]??0));
+        const lineWidth=lineRight-lineLeft,lineCenter=(lineLeft+lineRight)/2,pageCenter=layout.width/2;
+        row.style.textAlign=lineWidth<layout.width*.78&&Math.abs(lineCenter-pageCenter)<layout.width*.16?'center':'justify';
         for(const run of line.runs){const span=document.createElement('span');span.textContent=run.text;span.style.fontFamily=`${names[run.font]||'BookDevanagari'}, serif`;span.style.fontSize=`${run.size/base}em`;span.style.fontWeight=run.bold?'700':'400';span.style.fontStyle=run.italic?'italic':'normal';row.append(span);}
         paper.append(row);
       }
@@ -179,6 +183,7 @@
     if(saved){editor();if(next&&page<cfg.total)await load(page+1);}
   }
   $('previous').onclick=()=>load(page-1);$('next').onclick=()=>load(page+1);$('page-number').onchange=e=>load(e.target.value);
+  if(isMobileReader&&!cfg.review)$('mode').value='flow';
   $('mode').onchange=()=>{zoom=defaultZoom;render();};
   function responsiveZoom(delta){
     if(isMobileReader&&!cfg.review&&$('mode').value==='fixed')$('mode').value='flow';
