@@ -182,10 +182,10 @@
   $('mode').onchange=()=>{zoom=defaultZoom;render();};
   function responsiveZoom(delta){
     if(isMobileReader&&!cfg.review&&$('mode').value==='fixed')$('mode').value='flow';
-    zoom=Math.max(.75,Math.min(2.2,zoom+delta));
+    zoom=Math.max(.6,Math.min(2.4,Number((zoom*delta).toFixed(3))));
     render();
   }
-  $('smaller').onclick=()=>responsiveZoom(-.12);$('larger').onclick=()=>responsiveZoom(.12);
+  $('smaller').onclick=()=>responsiveZoom(.9);$('larger').onclick=()=>responsiveZoom(1.1);
   $('theme').onchange=e=>{document.body.dataset.theme=e.target.value;storage.set('content-theme',e.target.value);};$('theme').value=storage.get('content-theme')||'light';document.body.dataset.theme=$('theme').value;
   function cycleTheme(){
     const order=['light','sepia','dark'],next=order[(order.indexOf($('theme').value)+1)%order.length]||'light';
