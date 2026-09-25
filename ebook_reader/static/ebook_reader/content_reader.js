@@ -6,7 +6,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const fontCache = new Map();
   const isMobileReader = window.matchMedia?.('(max-width: 650px)').matches;
-  const defaultZoom = isMobileReader ? 1.08 : 1;
+  const defaultZoom = 1;
   let page = cfg.initial, payload = null, requestId = 0, zoom = defaultZoom, dirty = false, saving = false;
   const status = text => { $('status').textContent = text; };
   const url = (pattern, n) => pattern.replace('{page}', n);
@@ -179,8 +179,13 @@
     if(saved){editor();if(next&&page<cfg.total)await load(page+1);}
   }
   $('previous').onclick=()=>load(page-1);$('next').onclick=()=>load(page+1);$('page-number').onchange=e=>load(e.target.value);
-  if(isMobileReader&&!cfg.review)$('mode').value='flow';
-  $('mode').onchange=()=>{zoom=defaultZoom;render();};$('smaller').onclick=()=>{zoom=Math.max(.6,zoom-.15);render();};$('larger').onclick=()=>{zoom=Math.min(3,zoom+.15);render();};
+  $('mode').onchange=()=>{zoom=defaultZoom;render();};
+  function responsiveZoom(delta){
+    if(isMobileReader&&!cfg.review&&$('mode').value==='fixed')$('mode').value='flow';
+    zoom=Math.max(.75,Math.min(2.2,zoom+delta));
+    render();
+  }
+  $('smaller').onclick=()=>responsiveZoom(-.12);$('larger').onclick=()=>responsiveZoom(.12);
   $('theme').onchange=e=>{document.body.dataset.theme=e.target.value;storage.set('content-theme',e.target.value);};$('theme').value=storage.get('content-theme')||'light';document.body.dataset.theme=$('theme').value;
   function cycleTheme(){
     const order=['light','sepia','dark'],next=order[(order.indexOf($('theme').value)+1)%order.length]||'light';
