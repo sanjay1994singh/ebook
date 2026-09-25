@@ -5,7 +5,7 @@
   const $ = id => document.getElementById(id);
   const NS = 'http://www.w3.org/2000/svg';
   const fontCache = new Map();
-  const defaultZoom = window.matchMedia?.('(max-width: 650px)').matches ? 1.35 : 1;
+  const defaultZoom = window.matchMedia?.('(max-width: 650px)').matches ? 1.22 : 1;
   let page = cfg.initial, payload = null, requestId = 0, zoom = defaultZoom, dirty = false, saving = false;
   const status = text => { $('status').textContent = text; };
   const url = (pattern, n) => pattern.replace('{page}', n);
@@ -72,15 +72,15 @@
       }
       host.append(paper); return;
     }
-    const width=Math.max(160,host.clientWidth-2)*zoom;
+    const width=Math.max(160,host.clientWidth-2);
     const paper=document.createElement('div');paper.className='paper';paper.style.width=`${width}px`;
     const canvas=svg('svg',{viewBox:`0 0 ${layout.width} ${layout.height}`,width:'100%',role:'document','aria-label':`${cfg.title}, पृष्ठ ${page}`});
     canvas.style.aspectRatio=`${layout.width} / ${layout.height}`;
     // Text-only reader: ignore decoration even on previously extracted editions.
     for(const line of layout.lines) for(const run of line.runs){
-      const node=svg('text',{x:run.origin[0],y:run.origin[1],'font-family':`${names[run.font]||'BookDevanagari'}, serif`,'font-size':run.size,'font-weight':run.bold?'700':'400','font-style':run.italic?'italic':'normal',fill:/^#[0-9a-f]{6}$/i.test(run.color||'')?run.color:'#000000'});
+      const node=svg('text',{x:run.origin[0],y:run.origin[1],'font-family':`${names[run.font]||'BookDevanagari'}, serif`,'font-size':run.size*zoom,'font-weight':run.bold?'700':'400','font-style':run.italic?'italic':'normal',fill:/^#[0-9a-f]{6}$/i.test(run.color||'')?run.color:'#000000'});
       node.textContent=run.text;
-      if(names[run.font]==='BookDevanagari' && layout.fonts[run.font]?.legacy)node.setAttribute('font-size',run.size*.82);
+      if(names[run.font]==='BookDevanagari' && layout.fonts[run.font]?.legacy)node.setAttribute('font-size',run.size*zoom*.82);
       if(run.underline)node.setAttribute('text-decoration','underline');
       canvas.append(node);
     }
@@ -91,13 +91,13 @@
     [...canvas.querySelectorAll('text')].forEach((node,index)=>{
       const run=runs[index];
       if(!(run.confidence!==undefined||run.fit_source_width))return;
-      const available=run.bbox[2]-run.bbox[0],measured=node.getComputedTextLength();
+      const available=(run.bbox[2]-run.bbox[0])*zoom,measured=node.getComputedTextLength();
       if(available>0&&measured>available)node.setAttribute('font-size',Number(node.getAttribute('font-size'))*available/measured);
       if(available>0){node.setAttribute('x',(run.bbox[0]+run.bbox[2])/2);node.setAttribute('text-anchor','middle');}
     });
     // A vertical scrollbar can reduce available width after the page is inserted.
     // Fit again once so the default zoom does not introduce a horizontal scrollbar.
-    paper.style.width=`${Math.max(160,host.clientWidth-2)*zoom}px`;
+    paper.style.width=`${Math.max(160,host.clientWidth-2)}px`;
   }
   function markDirty(){dirty=true;if($('approve'))$('approve').checked=false;status('बदलाव सुरक्षित करना बाकी है।');}
   function editor(){
