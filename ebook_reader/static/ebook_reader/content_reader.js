@@ -8,7 +8,7 @@
   const isMobileReader = window.matchMedia?.('(max-width: 650px)').matches;
   const defaultZoom = 1;
   let page = cfg.initial, payload = null, requestId = 0, zoom = defaultZoom, dirty = false, saving = false;
-  const status = text => { $('status').textContent = text; };
+  const status = (text, loading=false) => { const el=$('status'); el.textContent = text; el.classList.toggle('loading', loading); };
   const url = (pattern, n) => pattern.replace('{page}', n);
   const storage = { get(k){try{return localStorage.getItem(k);}catch{return null;}}, set(k,v){try{localStorage.setItem(k,v);}catch{}} };
   const progressKey = `content-progress-${cfg.book}`;
@@ -146,7 +146,7 @@
     if(saving){status('पृष्ठ सुरक्षित हो रहा है; कृपया रुकें।');return;}
     if(dirty && !window.confirm('इस पृष्ठ के unsaved बदलाव छोड़कर आगे जाएँ?'))return;
     n=Math.max(1,Math.min(cfg.total,Number.parseInt(n,10)||1));
-    const id=++requestId;status('पृष्ठ तैयार हो रहा है…');
+    const id=++requestId;status('', true);
     try{
       const response=await fetch(url(cfg.page_url,n),{credentials:'same-origin',cache:'no-store'});
       if(!response.ok)throw new Error('पृष्ठ नहीं मिला। फिर प्रयास करें।');
@@ -265,3 +265,5 @@
   if(!cfg.review&&!new URL(location.href).searchParams.has('page'))page=Number(storage.get(progressKey))||page;
   if(cfg.total)load(page);else status('पुस्तक की extraction अभी पूरी नहीं हुई है।');
 })();
+
+
