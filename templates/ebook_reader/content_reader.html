@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ edition.book.title }} · पुस्तक</title>
-  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260919-reader-icons-1">
+  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260919-reader-zoom-1">
 </head>
 <body class="{% if review %}review-mode{% endif %}">
   <header class="toolbar reader-chrome">
@@ -68,6 +68,7 @@
   <form hidden>{% csrf_token %}</form>
   {% endif %}
   {{ reader_config|json_script:"reader-config" }}
-  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260919-reader-icons-1" defer></script>
+  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260919-reader-zoom-1" defer></script>
 </body>
 </html>
+
