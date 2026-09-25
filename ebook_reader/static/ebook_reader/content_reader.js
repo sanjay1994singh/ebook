@@ -6,7 +6,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const fontCache = new Map();
   const isMobileReader = window.matchMedia?.('(max-width: 650px)').matches;
-  const defaultZoom = isMobileReader ? 1.15 : 1;
+  const defaultZoom = isMobileReader ? 1.08 : 1;
   let page = cfg.initial, payload = null, requestId = 0, zoom = defaultZoom, dirty = false, saving = false;
   const status = text => { $('status').textContent = text; };
   const url = (pattern, n) => pattern.replace('{page}', n);
@@ -63,7 +63,7 @@
     if (currentPayload !== payload) return;
     const host=$('page-host'); host.replaceChildren();
     if ($('mode').value === 'flow') {
-      const paper=document.createElement('div');paper.className='paper flow-paper';paper.style.fontSize=`${20*zoom}px`;
+      const paper=document.createElement('div');paper.className='paper flow-paper';paper.style.fontSize=`${(isMobileReader?32:20)*zoom}px`;
       const sizes=layout.lines.flatMap(l=>l.runs.map(r=>r.size)).sort((a,b)=>a-b);
       const base=sizes[Math.floor(sizes.length/2)]||18;
       for(const line of layout.lines){
