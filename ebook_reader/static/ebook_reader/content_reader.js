@@ -63,7 +63,7 @@
     if (currentPayload !== payload) return;
     const host=$('page-host'); host.replaceChildren();
     if ($('mode').value === 'flow') {
-      const paper=document.createElement('div');paper.className='paper flow-paper';paper.style.fontSize=`${(isMobileReader?25:20)*zoom}px`;
+      const paper=document.createElement('div');paper.className='paper flow-paper';paper.style.fontSize=`${(isMobileReader?18:20)*zoom}px`;
       const sizes=layout.lines.flatMap(l=>l.runs.map(r=>r.size)).sort((a,b)=>a-b);
       const base=sizes[Math.floor(sizes.length/2)]||18;
       for(const line of layout.lines){
@@ -276,6 +276,7 @@
   if(!cfg.review&&!new URL(location.href).searchParams.has('page'))page=Number(storage.get(progressKey))||page;
   if(cfg.total)load(page);else status('पुस्तक की extraction अभी पूरी नहीं हुई है।');
 })();
+
 
 
 
