@@ -161,3 +161,10 @@ body[data-theme=sepia]{--bg:#e5dac4;--paper:#fbf1dc;--ink:#4b3524}body[data-them
   footer.reader-footer.gs-footer .gs-theme-btn{position:absolute!important;right:47px!important;top:7px!important;width:34px!important;height:48px!important;display:flex!important}.gs-footer .gs-theme-dot{width:15px!important;height:15px!important}.gs-footer .gs-theme-dot.d1{left:2px!important;top:10px!important}.gs-footer .gs-theme-dot.d2{left:14px!important;top:10px!important}.gs-footer .gs-theme-dot.d3{left:8px!important;top:22px!important}
   footer.reader-footer.gs-footer .gs-refresh-btn{position:absolute!important;right:6px!important;top:7px!important;width:38px!important;height:48px!important;display:flex!important;visibility:visible!important}.gs-footer .gs-refresh-text{font-size:40px!important;line-height:40px!important}
 }
+
+/* Force refresh visible above footer */
+@media(max-width:650px){
+  footer.reader-footer.gs-footer .gs-theme-btn{position:fixed!important;right:46px!important;bottom:20px!important;z-index:99999!important;display:flex!important;visibility:visible!important}
+  footer.reader-footer.gs-footer .gs-refresh-btn{position:fixed!important;right:5px!important;bottom:20px!important;z-index:100000!important;width:38px!important;height:48px!important;display:flex!important;visibility:visible!important;opacity:1!important;background:transparent!important;color:#fff!important}
+  footer.reader-footer.gs-footer .gs-refresh-text{display:flex!important;color:#fff!important;font:400 40px/40px Arial,Helvetica,sans-serif!important;visibility:visible!important;opacity:1!important}
+}
