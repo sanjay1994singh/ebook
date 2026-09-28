@@ -403,3 +403,20 @@ body footer.reader-footer.gs-footer button#refresh-page.gs-refresh-btn{
 body footer.reader-footer.gs-footer button#refresh-page.gs-refresh-btn .gs-refresh-text{display:flex!important;visibility:visible!important;opacity:1!important;color:#fff!important;font:400 39px/39px Arial,Helvetica,sans-serif!important;transform:translateY(-2px)!important;}
 body footer.reader-footer.gs-footer #mode,
 body footer.reader-footer.gs-footer .theme-control{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;}
+
+/* Draw refresh icon on footer itself when WebView omits/clips the button */
+body footer.reader-footer.gs-footer:after{
+  content:'↻'!important;
+  position:fixed!important;
+  right:6px!important;
+  bottom:20px!important;
+  width:36px!important;
+  height:48px!important;
+  z-index:2147483602!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#fff!important;
+  font:400 39px/39px Arial,Helvetica,sans-serif!important;
+  pointer-events:none!important;
+}

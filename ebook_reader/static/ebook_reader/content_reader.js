@@ -224,6 +224,17 @@
   }
   for(const chapter of cfg.chapters){const option=document.createElement('option');option.value=chapter.start_page;option.textContent=chapterLabel(chapter);$('chapter').append(option);}$('chapter').onchange=e=>{if(e.target.value)load(e.target.value);};
   if($('refresh-page'))$('refresh-page').onclick=()=>load(page);
+  const readerFooter=document.querySelector('footer.reader-footer');
+  if(readerFooter){
+    readerFooter.addEventListener('click',event=>{
+      const x=event.clientX||0;
+      const y=event.clientY||0;
+      if(x>=window.innerWidth-62 && y>=window.innerHeight-98){
+        event.preventDefault();
+        load(page);
+      }
+    });
+  }
   if($('theme-toggle'))$('theme-toggle').onclick=cycleTheme;
   if($('toggle-mode'))$('toggle-mode').onclick=()=>{$('mode').value=$('mode').value==='fixed'?'flow':'fixed';$('mode').dispatchEvent(new Event('change'));};
   if($('bookmark-page'))$('bookmark-page').onclick=toggleBookmark;
@@ -265,6 +276,7 @@
   if(!cfg.review&&!new URL(location.href).searchParams.has('page'))page=Number(storage.get(progressKey))||page;
   if(cfg.total)load(page);else status('पुस्तक की extraction अभी पूरी नहीं हुई है।');
 })();
+
 
 
 
