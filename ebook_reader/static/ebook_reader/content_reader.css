@@ -151,3 +151,13 @@ body[data-theme=sepia]{--bg:#e5dac4;--paper:#fbf1dc;--ink:#4b3524}body[data-them
   footer.reader-footer.gs-footer .gs-theme-btn{flex:0 0 28px!important;width:28px!important}.gs-footer .gs-theme-dot{width:14px!important;height:14px!important}.gs-footer .gs-theme-dot.d1{left:1px!important}.gs-footer .gs-theme-dot.d2{left:11px!important}.gs-footer .gs-theme-dot.d3{left:6px!important;top:22px!important}
   footer.reader-footer.gs-footer .gs-refresh-btn{flex:0 0 30px!important;width:30px!important;display:flex!important}.gs-footer .gs-refresh-text{font-size:36px!important;line-height:39px!important}
 }
+
+/* Pin right footer icons so theme and refresh never clip */
+@media(max-width:650px){
+  footer.reader-footer.gs-footer{position:fixed!important;display:flex!important;justify-content:flex-start!important;padding-left:6px!important;padding-right:86px!important;gap:4px!important;overflow:visible!important}
+  footer.reader-footer.gs-footer .gs-nav{flex:0 0 96px!important;width:96px!important}.gs-footer .gs-nav button{width:48px!important}.gs-footer .gs-chevron{font-size:52px!important;transform:scaleX(.64) translateY(-3px)!important}
+  footer.reader-footer.gs-footer .gs-hand-btn{flex:0 0 38px!important;width:38px!important}.gs-footer .gs-hand-text{font-size:31px!important}.gs-footer .gs-hand-btn:after{left:10px!important;width:16px!important}
+  footer.reader-footer.gs-footer .gs-zoom{flex:0 0 122px!important;width:122px!important;padding-left:6px!important;padding-right:6px!important;gap:4px!important}.gs-footer .gs-zoom button{width:25px!important}.gs-footer .gs-zoom-box{width:22px!important;height:22px!important}.gs-footer .gs-aa{font-size:22px!important}
+  footer.reader-footer.gs-footer .gs-theme-btn{position:absolute!important;right:47px!important;top:7px!important;width:34px!important;height:48px!important;display:flex!important}.gs-footer .gs-theme-dot{width:15px!important;height:15px!important}.gs-footer .gs-theme-dot.d1{left:2px!important;top:10px!important}.gs-footer .gs-theme-dot.d2{left:14px!important;top:10px!important}.gs-footer .gs-theme-dot.d3{left:8px!important;top:22px!important}
+  footer.reader-footer.gs-footer .gs-refresh-btn{position:absolute!important;right:6px!important;top:7px!important;width:38px!important;height:48px!important;display:flex!important;visibility:visible!important}.gs-footer .gs-refresh-text{font-size:40px!important;line-height:40px!important}
+}
