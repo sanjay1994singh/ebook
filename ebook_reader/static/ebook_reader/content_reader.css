@@ -420,3 +420,32 @@ body footer.reader-footer.gs-footer:after{
   font:400 39px/39px Arial,Helvetica,sans-serif!important;
   pointer-events:none!important;
 }
+
+/* LIVE DOM footer fix: current nikunjras HTML has no gs-* footer classes */
+body footer.reader-footer{
+  position:fixed!important;left:0!important;right:0!important;bottom:0!important;
+  height:76px!important;box-sizing:border-box!important;
+  padding:7px 92px calc(8px + env(safe-area-inset-bottom)) 6px!important;
+  background:#ff781f!important;display:flex!important;align-items:flex-start!important;justify-content:flex-start!important;gap:5px!important;overflow:visible!important;z-index:99990!important;color:#fff!important;
+}
+body footer.reader-footer .footer-nav{flex:0 0 96px!important;width:96px!important;height:48px!important;display:flex!important;background:rgba(255,255,255,.18)!important;border-radius:9px!important;overflow:hidden!important;}
+body footer.reader-footer .footer-nav button{width:48px!important;height:48px!important;min-height:48px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:0!important;color:#fff!important;}
+body footer.reader-footer .footer-nav svg{display:none!important;}
+body footer.reader-footer #previous:before,body footer.reader-footer #next:before{display:flex!important;color:#fff!important;font-family:Arial,Helvetica,sans-serif!important;font-size:55px!important;font-weight:700!important;line-height:40px!important;transform:scaleX(.68) translateY(-3px)!important;}
+body footer.reader-footer #previous:before{content:'‹'!important;}body footer.reader-footer #next:before{content:'›'!important;}
+body footer.reader-footer #toggle-mode.footer-symbol{flex:0 0 40px!important;width:40px!important;height:48px!important;min-height:48px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;font-size:0!important;position:relative!important;color:#fff!important;}
+body footer.reader-footer #toggle-mode.footer-symbol svg{display:none!important;}
+body footer.reader-footer #toggle-mode.footer-symbol:before{content:'☝'!important;display:flex!important;color:#fff!important;font-family:'Segoe UI Symbol','Noto Color Emoji',system-ui,sans-serif!important;font-size:31px!important;line-height:40px!important;filter:grayscale(1) brightness(5)!important;transform:translateY(-2px)!important;}
+body footer.reader-footer #toggle-mode.footer-symbol:after{content:''!important;position:absolute!important;left:10px!important;top:4px!important;width:17px!important;height:9px!important;border-top:3px dotted #fff!important;border-radius:50%!important;}
+body footer.reader-footer .footer-zoom{flex:0 0 122px!important;width:122px!important;height:48px!important;min-height:48px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;padding:5px 7px!important;background:rgba(255,255,255,.18)!important;border-radius:9px!important;color:#fff!important;font:700 22px/1 Arial,Helvetica,sans-serif!important;}
+body footer.reader-footer .footer-zoom button{width:25px!important;height:38px!important;min-height:38px!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;font-size:0!important;color:#fff!important;}
+body footer.reader-footer .footer-zoom button svg{display:none!important;}
+body footer.reader-footer #smaller:before,body footer.reader-footer #larger:before{display:flex!important;align-items:center!important;justify-content:center!important;width:22px!important;height:22px!important;box-sizing:border-box!important;border:3px solid #fff!important;border-radius:6px!important;color:#fff!important;font:700 17px/16px Arial,Helvetica,sans-serif!important;}
+body footer.reader-footer #smaller:before{content:'−'!important;}body footer.reader-footer #larger:before{content:'+'!important;}
+body footer.reader-footer .footer-zoom span{display:flex!important;color:#fff!important;font:700 23px/1 Arial,Helvetica,sans-serif!important;margin:0!important;}
+body footer.reader-footer button#theme-toggle.theme-icon{position:fixed!important;left:auto!important;right:45px!important;top:auto!important;bottom:20px!important;z-index:2147483600!important;width:34px!important;height:48px!important;min-height:48px!important;display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;font-size:0!important;}
+body footer.reader-footer button#theme-toggle.theme-icon svg{width:35px!important;height:35px!important;display:block!important;}
+body footer.reader-footer button#refresh-page{position:fixed!important;left:auto!important;right:5px!important;top:auto!important;bottom:20px!important;z-index:2147483601!important;width:36px!important;height:48px!important;min-height:48px!important;display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;background:transparent!important;border:0!important;border-radius:0!important;padding:0!important;color:#fff!important;font-size:0!important;}
+body footer.reader-footer button#refresh-page svg{display:none!important;}
+body footer.reader-footer button#refresh-page:before{content:'↻'!important;display:flex!important;visibility:visible!important;opacity:1!important;color:#fff!important;font:400 39px/39px Arial,Helvetica,sans-serif!important;transform:translateY(-2px)!important;}
+body footer.reader-footer #mode,body footer.reader-footer .theme-control{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;}
