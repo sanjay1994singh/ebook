@@ -4,13 +4,13 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ edition.book.title }} · पुस्तक</title>
-  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260925-reader-spinner-1">
+  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260928-geeta-reader-ui-1">
 </head>
 <body class="{% if review %}review-mode{% endif %}">
   <header class="toolbar reader-chrome">
     <div class="reader-statusbar" aria-hidden="true"><span>2:12</span><span>▮▮▮ 5G 36</span></div>
     <div class="reader-topbar">
-      <label class="index-picker"><select id="chapter" aria-label="विषय सूची"><option value="">Index</option></select></label>
+      <label class="index-picker"><select id="chapter" aria-label="विषय सूची"><option value="">सूची</option></select></label>
       <div class="book-title"><small>{% if review %}पृष्ठ समीक्षा · संस्करण {{ edition.pk }}{% elif draft_preview %}Draft preview · समीक्षा बाकी है{% else %}ई-पुस्तक{% endif %}</small><strong>{{ edition.book.title }}</strong></div>
       {% if review %}<a id="reader-preview" href="{% url 'ebook_reader:content_preview' edition.pk %}" target="_blank" rel="noopener">Preview</a>{% endif %}
       <button class="icon-button bookmark-button" id="bookmark-page" type="button" aria-label="Bookmark page" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5h10v16l-5-3.6-5 3.6z"/></svg></button>
@@ -68,9 +68,11 @@
   <form hidden>{% csrf_token %}</form>
   {% endif %}
   {{ reader_config|json_script:"reader-config" }}
-  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260925-reader-spinner-1" defer></script>
+  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260928-geeta-reader-ui-1" defer></script>
 </body>
 </html>
+
+
 
 
 
