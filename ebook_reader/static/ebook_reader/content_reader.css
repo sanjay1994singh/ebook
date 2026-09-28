@@ -52,7 +52,7 @@ body[data-theme=sepia]{--bg:#e5dac4;--paper:#fbf1dc;--ink:#4b3524}body[data-them
   .footer-nav button{width:63px;height:48px;font-size:0;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border-radius:0}
   .footer-nav button svg{width:40px;height:40px;stroke-width:3.8}
   .footer-symbol{width:54px;height:48px;font-size:0;padding:0;display:flex;align-items:center;justify-content:center;background:transparent!important}
-  .footer-symbol svg{width:35px;height:35px;stroke-width:2.15}
+  .footer-symbol svg{width:36px;height:36px}.footer-symbol .tap-hand{fill:currentColor;stroke:none}.footer-symbol .tap-rays{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
   .footer-zoom{height:48px;display:flex;align-items:center;gap:8px;padding:5px 10px;font-family:system-ui,sans-serif;font-size:22px;line-height:1;flex:0 0 154px;justify-content:center}
   .footer-zoom button{width:30px;height:38px;min-height:38px;padding:0;background:transparent;display:flex;align-items:center;justify-content:center}
   .footer-zoom button svg{width:24px;height:24px;stroke-width:2.6}
@@ -62,6 +62,7 @@ body[data-theme=sepia]{--bg:#e5dac4;--paper:#fbf1dc;--ink:#4b3524}body[data-them
   #refresh-page svg{width:35px;height:35px;stroke-width:2.6}
   #mode,.theme-control{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important}
 }
+
 
 
 

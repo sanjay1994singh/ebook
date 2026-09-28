@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ edition.book.title }} · पुस्तक</title>
-  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260928-geeta-reader-ui-6">
+  <link rel="stylesheet" href="{% static 'ebook_reader/content_reader.css' %}?v=20260928-geeta-reader-ui-7">
 </head>
 <body class="{% if review %}review-mode{% endif %}">
   <header class="toolbar reader-chrome">
@@ -43,7 +43,7 @@
       <button id="previous" type="button" aria-label="Previous page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.8 4.2 8 12l7.8 7.8"/></svg></button>
       <button id="next" type="button" aria-label="Next page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 4.2 16 12l-7.8 7.8"/></svg></button>
     </div>
-    <button class="footer-symbol" id="toggle-mode" type="button" aria-label="Reader mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8v3.1"/><path d="M8.5 4.1 10 6.7"/><path d="M15.5 4.1 14 6.7"/><path d="M12 21.2c-2.7-2.8-5.1-5.9-5.1-8.2 0-1.1.8-1.9 1.8-1.9.6 0 1 .2 1.4.7V7.3a1.4 1.4 0 1 1 2.8 0v5.3l1-1.3a2 2 0 0 1 3.2 2.4l-2.7 3.7c-.7 1-1.5 2.1-2.4 3.8z"/></svg></button>
+    <button class="footer-symbol" id="toggle-mode" type="button" aria-label="Reader mode"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="tap-rays" d="M6.4 5.1 4.7 3.4M12 4.4V2M17.6 5.1l1.7-1.7"/><path class="tap-hand" d="M10.1 21.4c-.9-1.3-1.7-2.4-2.5-3.4l-2.2-2.9c-.6-.8-.5-1.8.2-2.4.7-.6 1.7-.5 2.4.2l1.1 1.1V7.4a1.45 1.45 0 1 1 2.9 0v5l.5-.6a1.6 1.6 0 0 1 2.4-.1l.3.4.5-.5a1.55 1.55 0 0 1 2.3 0l.3.5.4-.3a1.5 1.5 0 0 1 2.2.3c.4.5.4 1.2.1 1.8l-2.7 4.7c-.8 1.4-2.1 2.2-3.7 2.2z"/></svg></button>
     <div class="footer-zoom">
       <button id="smaller" type="button" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
       <span>Aa</span>
@@ -68,9 +68,10 @@
   <form hidden>{% csrf_token %}</form>
   {% endif %}
   {{ reader_config|json_script:"reader-config" }}
-  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260928-geeta-reader-ui-6" defer></script>
+  <script src="{% static 'ebook_reader/content_reader.js' %}?v=20260928-geeta-reader-ui-7" defer></script>
 </body>
 </html>
+
 
 
 
