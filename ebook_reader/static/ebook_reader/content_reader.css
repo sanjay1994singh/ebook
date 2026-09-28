@@ -121,3 +121,13 @@ body[data-theme=sepia]{--bg:#e5dac4;--paper:#fbf1dc;--ink:#4b3524}body[data-them
   .gs-theme-btn{width:44px!important;height:48px!important;min-height:48px!important;background:transparent!important;border-radius:0!important;position:relative!important}.gs-theme-dot{position:absolute!important;width:18px!important;height:18px!important;border:1.5px solid #fff!important;border-radius:50%!important}.gs-theme-dot.d1{left:8px!important;top:10px!important;background:#ee4f65!important}.gs-theme-dot.d2{left:20px!important;top:10px!important;background:#2c88c8!important}.gs-theme-dot.d3{left:14px!important;top:23px!important;background:#f6ce39!important}
   .gs-refresh-btn{width:46px!important;height:48px!important;min-height:48px!important;background:transparent!important;border-radius:0!important}.gs-refresh-text{font:400 44px/44px Arial,Helvetica,sans-serif!important;transform:translateY(-2px)!important}
 }
+
+/* Compact Geeta Seva footer fit for 360dp emulator */
+@media(max-width:650px){
+  .gs-footer{height:76px!important;padding:7px 6px calc(8px + env(safe-area-inset-bottom))!important;gap:4px!important;overflow:hidden!important}
+  .gs-nav{flex:0 0 96px!important;width:96px!important;height:48px!important}.gs-nav button{width:48px!important;height:48px!important}.gs-chevron{font-size:54px!important;line-height:40px!important;transform:scaleX(.68) translateY(-3px)!important}
+  .gs-hand-btn{flex:0 0 40px!important;width:40px!important;height:48px!important}.gs-hand-text{font-size:32px!important}.gs-hand-btn:after{left:11px!important;top:4px!important;width:17px!important}
+  .gs-zoom{flex:0 0 124px!important;width:124px!important;height:48px!important;padding:5px 7px!important;gap:5px!important}.gs-zoom button{width:26px!important}.gs-zoom-box{width:22px!important;height:22px!important;border-width:3px!important;font-size:17px!important;line-height:17px!important}.gs-aa{font-size:23px!important;margin:0!important}
+  .gs-theme-btn{flex:0 0 34px!important;width:34px!important;height:48px!important}.gs-theme-dot{width:16px!important;height:16px!important}.gs-theme-dot.d1{left:3px!important;top:11px!important}.gs-theme-dot.d2{left:15px!important;top:11px!important}.gs-theme-dot.d3{left:9px!important;top:23px!important}
+  .gs-refresh-btn{flex:0 0 34px!important;width:34px!important;height:48px!important}.gs-refresh-text{font-size:40px!important;line-height:42px!important}
+}
