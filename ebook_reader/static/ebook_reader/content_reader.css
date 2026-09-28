@@ -68,3 +68,19 @@ body[data-theme=sepia]{--bg:#e5dac4;--paper:#fbf1dc;--ink:#4b3524}body[data-them
 
 
 
+
+/* Geeta Seva matched footer icons */
+@media(max-width:650px){
+  .reader-footer{height:76px!important;padding:7px 8px calc(8px + env(safe-area-inset-bottom))!important;gap:5px!important;align-items:flex-start!important;background:#ff781f!important}
+  .reader-footer svg{display:block;fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round}
+  .footer-nav{height:48px!important;flex:0 0 126px!important;background:rgba(255,255,255,.16)!important;border-radius:9px!important;overflow:hidden!important}
+  .footer-nav button{width:63px!important;height:48px!important;min-height:48px!important;padding:0!important;background:transparent!important;border-radius:0!important}
+  .gs-arrow{width:43px!important;height:43px!important;stroke-width:6!important}
+  .footer-symbol{width:54px!important;height:48px!important;min-height:48px!important;padding:0!important;background:transparent!important;border-radius:0!important}
+  .gs-hand{width:38px!important;height:38px!important}.gs-hand-rays{fill:none!important;stroke:#fff!important;stroke-width:3!important}.gs-hand-shape{fill:#fff!important;stroke:none!important}
+  .footer-zoom{height:48px!important;min-height:48px!important;flex:0 0 154px!important;gap:8px!important;padding:5px 10px!important;justify-content:center!important;background:rgba(255,255,255,.16)!important;border-radius:9px!important;color:#fff!important;font:700 22px/1 system-ui,sans-serif!important}
+  .footer-zoom button{width:30px!important;height:38px!important;min-height:38px!important;padding:0!important;background:transparent!important}
+  .footer-zoom svg{width:25px!important;height:25px!important;stroke-width:2.4!important}.footer-zoom rect{stroke:#fff!important;fill:none!important}
+  .theme-icon{width:44px!important;height:48px!important;min-height:48px!important;padding:0!important;background:transparent!important;border-radius:0!important}.gs-theme{width:35px!important;height:35px!important;stroke-width:1.3!important}.gs-theme .c1{fill:#ef4d67!important;stroke:#fff!important}.gs-theme .c2{fill:#267fc4!important;stroke:#fff!important}.gs-theme .c3{fill:#f4ce38!important;stroke:#fff!important}
+  #refresh-page{width:46px!important;height:48px!important;min-height:48px!important;padding:0!important;background:transparent!important;border-radius:0!important}.gs-refresh{width:38px!important;height:38px!important;stroke-width:4!important}
+}
